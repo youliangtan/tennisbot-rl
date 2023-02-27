@@ -3,7 +3,8 @@
 import pybullet as p
 import os
 import math
-from typing import Tuple
+from typing import Tuple, List
+from simple_pid import PID
 
 class Racket:
     def __init__(self, client, pos=[0, 0, 0]):
@@ -13,69 +14,69 @@ class Racket:
                               basePosition=pos,
                               physicsClientId=client)
 
-        # # Joint indices as found by p.getJointInfo()
-        # self.steering_joints = [0, 2]
-        # self.drive_joints = [1, 3, 4, 5]
-        # # Joint speed
-        # self.joint_speed = 0
-        # # Drag constants
-        # self.c_rolling = 0.2
-        # self.c_drag = 0.01
-        # # Throttle constant increases "speed" of the car
-        # self.c_throttle = 20
+        # Define PID controller gains
+        # NOTE: this is tested in playground.py
+        kp = 1.0
+        kd = 0.3
+        ki = 0.0
+        maxForce = 10.0
+        maxTorque = 1.0
+
+        self.pos_controller = [
+            PID(kp, ki, kd,
+                output_limits=(-maxForce, maxForce)) for i in range(3)
+        ]
+
+        self.ori_controller = [
+            PID(kp, ki, kd,
+                output_limits=(-maxTorque, maxTorque)) for i in range(3)
+        ]
 
     def get_ids(self) -> Tuple:
         return self.id, self.client
 
     def apply_action(self, action):
-        # Expects action to be two dimensional
-        throttle, steering_angle = action
-
-        # Clip throttle and steering angle to reasonable values
-        throttle = min(max(throttle, 0), 1)
-        steering_angle = max(min(steering_angle, 0.6), -0.6)
-
-        # TODO: use torque and force control instead of joint
         """
-        # Set the steering joint positions
-        p.setJointMotorControlArray(self.car, self.steering_joints,
-                                    controlMode=p.POSITION_CONTROL,
-                                    targetPositions=[steering_angle] * 2,
-                                    physicsClientId=self.client)
-
-        # Calculate drag / mechanical resistance ourselves
-        # Using velocity control, as torque control requires precise models
-        friction = -self.joint_speed * (self.joint_speed * self.c_drag +
-                                        self.c_rolling)
-        acceleration = self.c_throttle * throttle + friction
-        # Each time step is 1/240 of a second
-        self.joint_speed = self.joint_speed + 1/30 * acceleration
-        if self.joint_speed < 0:
-            self.joint_speed = 0
-
-        # Set the velocity of the wheel joints directly
-        p.setJointMotorControlArray(
-            bodyUniqueId=self.car,
-            jointIndices=self.drive_joints,
-            controlMode=p.VELOCITY_CONTROL,
-            targetVelocities=[self.joint_speed] * 4,
-            forces=[1.2] * 4,
-            physicsClientId=self.client)
+        Applying position control to the racket
         """
+        self.set_target_location(action)
+        self.apply_pid_force_torque()
 
-    def get_observation(self):
-        # Get the position and orientation of the racket in the simulation
-        pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
-        ang = p.getEulerFromQuaternion(ang)
-        # ori = (math.cos(ang[2]), math.sin(ang[2]))
+    def set_target_location(self, pose):
         """
-        pos = pos[:2]
-        # Get the velocity of the car
-        vel = p.getBaseVelocity(self.car, self.client)[0][0:2]
+        This is to set the target location of where we want the racket to be
+        """
+        for i in range(3):
+            self.pos_controller[i].setpoint = pose[i]
+            self.ori_controller[i].setpoint = pose[i+3]
 
-        # Concatenate position, orientation, velocity
-        observation = (pos + ori + vel)
+    def apply_pid_force_torque(self):
+        """
+        Applying force and torque control to the racket
+        """
+        pose = self.get_observation()
 
+        # Control the racket position
+        apply_force = [0, 0, 0]
+        for i in range(3):
+            apply_force[i] = self.pos_controller[i](pose[i])
+        p.applyExternalForce(
+            self.id, -1, apply_force, pose[:3], p.WORLD_FRAME)
+
+        # Control the racket orientation
+        apply_torque = [0, 0, 0]
+        for i in range(3):
+            apply_torque[i] = self.ori_controller[i](pose[i+3])
+
+        p.applyExternalTorque(self.id, -1, apply_torque, p.WORLD_FRAME)
+
+    def get_observation(self) -> List[float]:
+        """
+        Get the position and orientation of the racket in the simulation
         return observation
+        # Concatenate position, orientation in size 6 vector pose
+        # [x, y, z, roll, pitch, yaw]
         """
-        return pos, ang
+        pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
+        ori = p.getEulerFromQuaternion(ang)
+        return pos + ori

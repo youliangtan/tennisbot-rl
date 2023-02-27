@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pybullet as p
+from typing import Tuple, List
 import os
 
 ##############################################################################
@@ -39,3 +40,17 @@ class Ball:
         p.changeDynamics(self.id, -1, restitution=0.9)
         p.changeDynamics(self.id, -1, lateralFriction=0.2)
         p.changeDynamics(self.id, -1, rollingFriction=0.001)
+
+    def get_observation(self) -> List[float]:
+        """
+        Get the position and orientation of the racket in the simulation
+        return observation
+        # Concatenate position, orientation in size 6 vector 
+        # [x, y, z, roll, pitch, yaw]
+        """
+        pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
+        ori = p.getEulerFromQuaternion(ang)
+        for i in range(3):
+            self.pos_controller[i].setpoint = pos[i]
+            self.ori_controller[i].setpoint = ori[i]
+        return pos + ori
