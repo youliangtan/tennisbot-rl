@@ -42,26 +42,9 @@ def main():
     racket_obj = Racket(pybullet_client, pos=[3,0.1,0.8])
     racket = racket_obj.id
 
-    # Set up PID controller for tennis racket
     targetPos = [6.5, -0.2, 5]
     targetOri = [-1.57, 0, 0]
-
-    # Define PID controller gains
-    kp = 1.0
-    kd = 0.3
-    ki = 0.0
-    maxForce = 10.0
-    maxTorque = 1.0
-
-    pos_controller = [
-        PID(kp, ki, kd, setpoint=targetPos[i],
-            output_limits=(-maxForce, maxForce)) for i in range(3)
-    ]
-
-    ori_controller = [
-        PID(kp, ki, kd, setpoint=targetOri[i],
-            output_limits=(-maxTorque, maxTorque)) for i in range(3)
-    ]
+    racket_obj.set_target_location(targetPos + targetOri)
 
     ##################################################################################
     # Run Simulation
@@ -72,20 +55,7 @@ def main():
             pos, ori = p.getBasePositionAndOrientation(ball)
             p.applyExternalForce(ball, -1, [BALL_FORCE, 0, BALL_FORCE*2.2], pos, p.WORLD_FRAME)
         
-        pos, q_ori = p.getBasePositionAndOrientation(racket)
-        ori = p.getEulerFromQuaternion(q_ori)
-
-        # Control the racker position
-        apply_force = [0, 0, 0]
-        for i in range(3):
-            apply_force[i] = pos_controller[i](pos[i])
-        p.applyExternalForce(racket, -1, apply_force, pos, p.WORLD_FRAME)
-
-        # Control the racker orientation
-        apply_torque = [0, 0, 0]
-        for i in range(3):
-            apply_torque[i] = ori_controller[i](ori[i])
-        p.applyExternalTorque(racket, -1, apply_torque, p.WORLD_FRAME)
+        racket_obj.apply_pid_force_torque()
 
         p.stepSimulation()
         time.sleep(1./240.)

@@ -27,11 +27,11 @@ class TennisbotEnv(gym.Env):
 
     def __init__(self):
         self.action_space = gym.spaces.box.Box(
-            low=np.array([0, -.6], dtype=np.float32),
-            high=np.array([1, .6], dtype=np.float32))
+            low=np.array([-10.0, -10.0, -10.0, -1.0, -1.0, -1.0], dtype=np.float32),
+            high=np.array([10.0, 10.0, 10.0, 1.0, 1.0, 1.0], dtype=np.float32))
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-10, -10, -1, -1, -5, -5, -10, -10], dtype=np.float32),
-            high=np.array([10, 10, 1, 1, 5, 5, 10, 10], dtype=np.float32))
+            low=np.array([-20, -20, -5, -4, -4, -4], dtype=np.float32),
+            high=np.array([20, 20, 5, -4, -4, -4], dtype=np.float32))
         self.np_random, _ = gym.utils.seeding.np_random()
 
         if GUI_MODE:
@@ -74,6 +74,8 @@ class TennisbotEnv(gym.Env):
         """
         reward = 10
 
+        # TODO: Get observation of the racket and ball state
+        # TODO: define reward when the ball is hit by the racket
         ob = np.array(racket_ob, dtype=np.float32)
         return ob, reward, self.done, dict()
 

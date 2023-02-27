@@ -5,8 +5,13 @@ import tennisbot
 import time
 
 def main():
-    nn = torch.nn.Sequential(torch.nn.Linear(8, 64), torch.nn.Tanh(),
-                             torch.nn.Linear(64, 2))
+    input_size = 6
+    output_size = 6
+    nn = torch.nn.Sequential(
+            torch.nn.Linear(input_size, 64),
+            torch.nn.Tanh(),
+            torch.nn.Linear(64, output_size)
+        )
     agent = TRPOAgent(policy=nn)
 
     # agent.load_model("agent.pth")
