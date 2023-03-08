@@ -7,7 +7,8 @@ from typing import Tuple, List
 from simple_pid import PID
 
 class Racket:
-    def __init__(self, client, pos=[0, 0, 0]):
+    def __init__(self, client, pos=[0, 0, 0], enable_orientation=True):
+        self.enable_orientation = enable_orientation
         self.client = client
         f_name = os.path.join(os.path.dirname(__file__), 'racket.urdf')
         self.id = p.loadURDF(fileName=f_name,
@@ -49,6 +50,12 @@ class Racket:
         for i in range(3):
             self.pos_controller[i].setpoint = pose[i]
             self.ori_controller[i].setpoint = pose[i+3]
+
+        # This is some hack to disable orientation control
+        # TODO: not really working, fix this
+        if not self.enable_orientation:
+            for i in range(3):
+                self.ori_controller[i].setpoint = 0
 
     def apply_pid_force_torque(self):
         """

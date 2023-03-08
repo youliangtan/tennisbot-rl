@@ -5,7 +5,7 @@ import tennisbot
 import time
 
 def main():
-    input_size = 6
+    input_size = 9
     output_size = 6
     nn = torch.nn.Sequential(
             torch.nn.Linear(input_size, 64),
@@ -16,7 +16,7 @@ def main():
 
     # agent.load_model("agent.pth")
     agent.train("Tennisbot-v0", seed=0, batch_size=5000, iterations=100,
-                max_episode_length=250, verbose=True)
+                max_episode_length=2500, verbose=True)
     agent.save_model("agent.pth")
 
     env = gym.make('Tennisbot-v0')

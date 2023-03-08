@@ -35,6 +35,7 @@ class Ball:
         f_name = os.path.join(os.path.dirname(__file__), 'ball.urdf')
         self.id = p.loadURDF(  
             fileName=f_name, basePosition=pos, physicsClientId=client)
+        self.client = client
 
         # Make bouncey ball
         p.changeDynamics(self.id, -1, restitution=0.9)
@@ -43,14 +44,15 @@ class Ball:
 
     def get_observation(self) -> List[float]:
         """
-        Get the position and orientation of the racket in the simulation
-        return observation
-        # Concatenate position, orientation in size 6 vector 
-        # [x, y, z, roll, pitch, yaw]
+        Get the position of the ball in the simulation
+        @return ball pos in [x, y, z]
+        """
+        pos, _ = p.getBasePositionAndOrientation(self.id, self.client)
+        return pos
+
+    def apply_force(self, force: Tuple[float, float, float]):
+        """
+        Apply force to the ball in the simulation
         """
         pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
-        ori = p.getEulerFromQuaternion(ang)
-        for i in range(3):
-            self.pos_controller[i].setpoint = pos[i]
-            self.ori_controller[i].setpoint = ori[i]
-        return pos + ori
+        p.applyExternalForce(self.id, -1, force, pos, p.WORLD_FRAME)
