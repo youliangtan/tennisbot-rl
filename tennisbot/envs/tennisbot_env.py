@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import gymnasium as gym
+import gym
 import numpy as np
 import math
 from math import pi as PI
@@ -19,6 +19,7 @@ GUI_MODE = True
 DELAY_MODE = False
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5
+ENABLE_ORIENTATION = False
 
 ##############################################################################
 
@@ -82,13 +83,19 @@ class TennisbotEnv(gym.Env):
         contacts = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts) > 0:
             print("Ball hit the racket!")
-            reward = 20
+            reward = 200
             self.done = True
         else:
-            reward = 1
+            reward = 0
 
+        # set reward depends on y-distance of racket and ball
+        ball_y = self.ball.get_observation()[1]
+        racket_y = self.racket.get_observation()[1]
+        reward -= abs(ball_y - racket_y)/100
+
+        # this is to prevent the agent making big moves
         if self.prev_action is not None:
-            reward -= np.linalg.norm(self.prev_action - action)
+            reward -= np.linalg.norm(action - self.prev_action)/10000
 
         # Get observation of the racket and ball state
         racket_ob = self.racket.get_observation()
@@ -109,7 +116,7 @@ class TennisbotEnv(gym.Env):
         Court(self.client)
 
         # TODO: Randomly set the location of the racket and ball
-        self.racket = Racket(self.client, [6.5, 0.5, 0.5], False)
+        self.racket = Racket(self.client, [6.5, 0.5, 0.5], ENABLE_ORIENTATION)
         self.ball = Ball(self.client, pos=[-9,0,1])
 
         self.done = False

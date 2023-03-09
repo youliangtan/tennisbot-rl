@@ -6,7 +6,8 @@ The original tennisbot model is obtained from https://github.com/CORE-Robotics-L
 
 install dependencies
  - pybullet
- - gymnasium (new version of OpenAI gym)
+ - gym
+ - stable-baselines3
  - simple_pid
 
 Install the py pkg
@@ -28,5 +29,9 @@ python3 playground.py
 
 Run gym training
 ```bash
-python3 main.py
+# run default trpo agent with 100 iteratios
+python3 main.py -i 100
 ```
+
+## Notes
+ - Revert back to `gym` instead of `gymnasium` since `stable-baselines` does not support `gymnasium` yet: https://github.com/DLR-RM/stable-baselines3/pull/780

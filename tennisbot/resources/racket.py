@@ -6,6 +6,14 @@ import math
 from typing import Tuple, List
 from simple_pid import PID
 
+##############################################################################
+def set_angle(angle: float) -> float:
+    """
+    Ensure the angle is within the range of [-pi, pi] radian convention
+    """
+    return math.atan2(math.sin(angle), math.cos(angle))
+
+##############################################################################
 class Racket:
     def __init__(self, client, pos=[0, 0, 0], enable_orientation=True):
         self.enable_orientation = enable_orientation
@@ -18,10 +26,10 @@ class Racket:
         # Define PID controller gains
         # NOTE: this is tested in playground.py
         kp = 1.0
-        kd = 0.3
-        ki = 0.0
+        kd = 0.8
+        ki = 0.2
         maxForce = 10.0
-        maxTorque = 1.0
+        maxTorque = 3.0
 
         self.pos_controller = [
             PID(kp, ki, kd,
@@ -63,10 +71,10 @@ class Racket:
         """
         pose = self.get_observation()
 
-        # Control the racket position
-        apply_force = [0, 0, 0]
+        # Control the racket position, default z-force to compensate gravity
+        apply_force = [0, 0, 4]
         for i in range(3):
-            apply_force[i] = self.pos_controller[i](pose[i])
+            apply_force[i] += self.pos_controller[i](pose[i])
         p.applyExternalForce(
             self.id, -1, apply_force, pose[:3], p.WORLD_FRAME)
 
