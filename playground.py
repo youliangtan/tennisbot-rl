@@ -30,19 +30,17 @@ def main():
     # Load model in world
     planeId = p.loadURDF("plane.urdf")
 
-    court_obj = Court(pybullet_client)
-    court = court_obj.id
-
-    ball_obj = Ball(pybullet_client, pos=[-9,0,1])
+    court = Court(pybullet_client)
+    ball = Ball(pybullet_client, pos=[-9,0,1])
 
     # TODO: fix the wam7 robot with weird joint physics dynamics
     # tennisbot = p.loadURDF("robots/wam7.urdf", basePosition=[2, 0 , 1])
 
-    racket_obj = Racket(pybullet_client, pos=[3,0.1,0.8])
+    racket = Racket(pybullet_client, pos=[3,0.1,0.8])
 
     targetPos = [6.8, 0.1, 1]
     targetOri = [-1.57, 0, 0]
-    racket_obj.set_target_location(targetPos + targetOri)
+    racket.set_target_location(targetPos + targetOri)
 
     ##################################################################################
     # Run Simulation
@@ -50,14 +48,18 @@ def main():
     for i in range (10000):
         # shoot ball
         if BALL_START_SHOOT_FRAME < i < BALL_SHOOT_FRAMES+BALL_START_SHOOT_FRAME:
-            ball_obj.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
+            ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
         
-        racket_obj.apply_pid_force_torque()
+        racket.apply_pid_force_torque()
 
         # get collision info
-        contacts = p.getContactPoints(racket_obj.id, ball_obj.id)
+        contacts = p.getContactPoints(racket.id, ball.id)
         if len(contacts) > 0:
             print("Racket and ball are in collision!!")
+
+        contacts = p.getContactPoints(court.id, ball.id)
+        if len(contacts) > 0:
+            print("Court and ball are in collision!!")
 
         p.stepSimulation()
         time.sleep(1./240.)
