@@ -4,7 +4,7 @@ Source impl is from:
     https://github.com/GerardMaggiolino/TRPO-Implementation/blob/master/trpoagent.py
 """
 import torch
-import gymnasium as gym
+import gym
 from numpy.random import choice
 from copy import deepcopy
 from torch.nn.utils.convert_parameters import parameters_to_vector
