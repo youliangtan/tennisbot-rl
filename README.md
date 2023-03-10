@@ -2,6 +2,8 @@
 
 The original tennisbot model is obtained from https://github.com/CORE-Robotics-Lab/Wheelchair-Tennis-Robot
 
+![](pybullet_env.png)
+
 ## Installation
 
 install dependencies
