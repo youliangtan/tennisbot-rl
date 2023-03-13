@@ -27,8 +27,10 @@ def main(args):
         action_size = 2
         nn = torch.nn.Sequential(
             torch.nn.Linear(obs_size, 32),
-            torch.nn.Tanh(),
-            torch.nn.Linear(32, 64),
+            torch.nn.ReLU(),
+            torch.nn.Linear(32, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 64),
             torch.nn.ReLU(),
             torch.nn.Linear(64, action_size)
         )
@@ -47,7 +49,7 @@ def main(args):
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
     elif args.strategy == Strategy.PPO:
         env = gym.make('Tennisbot-v0')
-        model = PPO("MlpPolicy", env, verbose=0)
+        model = PPO("MlpPolicy", env, verbose=0,tensorboard_log="./ppo_log/")
 
         if args.load:
             print("loading previously trained PPO model")
@@ -64,13 +66,13 @@ def main(args):
     print("start running")
     env = gym.make('Tennisbot-v0')
     ob = env.reset()
-    while True:
-        action = agent(ob)
-        ob, _, done, _ = env.step(action)
-        # env.render()
-        if done:
-            ob = env.reset()
-            time.sleep(1/30)
+    # while True:
+    #     action = agent(ob)
+    #     ob, _, done, _ = env.step(action)
+    #     # env.render()
+    #     if done:
+    #         ob = env.reset()
+    #         time.sleep(1/30)
 
 ##############################################################################
 

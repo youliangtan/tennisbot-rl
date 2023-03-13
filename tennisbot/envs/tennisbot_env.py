@@ -15,7 +15,7 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = True
+GUI_MODE = False
 DELAY_MODE = True
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5
@@ -91,7 +91,12 @@ class TennisbotEnv(gym.Env):
         racket_pose = self.racket.get_observation()
         yz_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
                             (ball_pose[1] - racket_pose[1]) ** 2))
-        reward = max(self.prev_ball_racket_yz_dist - yz_dist, 0)
+        
+        # reward = max(self.prev_ball_racket_yz_dist - yz_dist, 0)
+
+
+        reward = max(1*math.exp(-yz_dist*10+1e-10), 0)
+
         self.prev_ball_racket_yz_dist = yz_dist
         # print("Reward: ", yz_dist)
 
@@ -99,7 +104,7 @@ class TennisbotEnv(gym.Env):
         contacts = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts) > 0:
             print(" BINGO!!!! Ball hits the racket!")
-            reward = 200
+            reward = 500
             self.done = True
 
         # end the episode if the ball hits the court
@@ -123,7 +128,7 @@ class TennisbotEnv(gym.Env):
         return [seed]
 
     def reset(self):
-        print("Reset environment!")
+        # print("Reset environment!")
         p.resetSimulation(self.client)
         p.setGravity(0, 0, -10)
 
