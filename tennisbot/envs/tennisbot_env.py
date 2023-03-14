@@ -7,6 +7,7 @@ from math import pi as PI
 import pybullet as p
 import matplotlib.pyplot as plt
 import time
+import random
 
 from tennisbot.resources.racket import Racket
 from tennisbot.resources.objects import Court, Ball
@@ -78,7 +79,10 @@ class TennisbotEnv(gym.Env):
 
         # Shoot the ball
         if self.step_count < BALL_SHOOT_FRAMES:
-            self.ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
+            self.ball.apply_force([
+                random.uniform(BALL_FORCE*0.8, BALL_FORCE*1.1),
+                random.uniform(-BALL_FORCE, BALL_FORCE),
+                BALL_FORCE*2.2])
 
         p.stepSimulation()
         self.step_count += 1
