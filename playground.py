@@ -44,7 +44,9 @@ def main():
 
     ##################################################################################
     # Run Simulation
-
+    time_step = 0.001
+    p.setTimeStep(time_step)
+    
     for i in range (10000):
         # shoot ball
         if BALL_START_SHOOT_FRAME < i < BALL_SHOOT_FRAMES+BALL_START_SHOOT_FRAME:
@@ -62,7 +64,7 @@ def main():
             print("Court and ball are in collision!!")
 
         p.stepSimulation()
-        time.sleep(1./240.)
+        time.sleep(time_step)
 
     p.disconnect()
 
