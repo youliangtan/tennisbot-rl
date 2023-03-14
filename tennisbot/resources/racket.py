@@ -25,19 +25,23 @@ class Racket:
 
         # Define PID controller gains
         # NOTE: this is tested in playground.py
-        kp = 1.0
-        kd = 0.8
-        ki = 0.2
+        kp = 6.0
+        kd = 2.2
+        ki = 0.0
         maxForce = 10.0
-        maxTorque = 3.0
 
         self.pos_controller = [
             PID(kp, ki, kd,
                 output_limits=(-maxForce, maxForce)) for i in range(3)
         ]
+        
+        kp_rpy = 10.0
+        kd_rpy = 0.8
+        ki_rpy = 0.2
+        maxTorque = 3.0
 
         self.ori_controller = [
-            PID(kp, ki, kd,
+            PID(kp_rpy, ki_rpy, kd_rpy,
                 output_limits=(-maxTorque, maxTorque)) for i in range(3)
         ]
 
