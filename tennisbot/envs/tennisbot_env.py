@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 
 import gym
@@ -15,7 +16,7 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = False
+GUI_MODE = True
 DELAY_MODE = True
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5
@@ -35,8 +36,8 @@ class TennisbotEnv(gym.Env):
         # Define action and observation space
         self.action_space = gym.spaces.box.Box(
             ## NOTE: This is the simplified action space in 2DOF x, y axis
-            low=np.array([5.0, -5.0], dtype=np.float32),
-            high=np.array([20.0, 5.0], dtype=np.float32))
+            low=np.array([2.0, -5.0], dtype=np.float32),
+            high=np.array([6.8, 5.0], dtype=np.float32))
         
             ## NOTE: This is the original action space in 6DOF
             # low=np.array([5.0, -5.0, 0.0, -PI, -PI, -PI], dtype=np.float32),
@@ -83,7 +84,7 @@ class TennisbotEnv(gym.Env):
         p.stepSimulation()
         self.step_count += 1
         if DELAY_MODE:
-            time.sleep(1./24000.)
+            time.sleep(0.003)
 
         # set reward depends on y-z distance of racket and ball
         # Compute reward as L2 change in distance
@@ -121,6 +122,7 @@ class TennisbotEnv(gym.Env):
 
         # Get observation of the racket and ball state
         ob = np.array(racket_pose + ball_pose, dtype=np.float32)
+
         return ob, reward, self.done, dict()
 
     def seed(self, seed=None):

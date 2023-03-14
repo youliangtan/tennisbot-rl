@@ -38,7 +38,7 @@ def main():
 
     racket = Racket(pybullet_client, pos=[3,0.1,0.8])
 
-    targetPos = [6.8, 0.1, 1]
+    targetPos = [12, 0.1, 1]
     targetOri = [-1.57, 0, 0]
     racket.set_target_location(targetPos + targetOri)
 
