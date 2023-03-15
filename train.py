@@ -26,7 +26,7 @@ def main():
     model = PPO("MlpPolicy", env, verbose=0,tensorboard_log=tmp_path)
 
     if LOAD_MODEL:
-        model.load("ppo_agent")
+        model.load(tmp_path+'best_model.zip')
     # model.set_logger(new_logger)
     eval_callback = EvalCallback(env, best_model_save_path=tmp_path,
                                 log_path=tmp_path, eval_freq=total_timesteps,

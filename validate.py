@@ -10,6 +10,7 @@ import argparse
 
 
 
+tmp_path = "./tmp/ppo/"
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
     # model = PPO("MlpPolicy", env, verbose=0,tensorboard_log="./ppo_log/")
     env = gym.make('Tennisbot-v0')
 
-    model =PPO.load("./saved_model/ppo_agent")
+    model =PPO.load(tmp_path + "best_model")
 
     print("start running")
     
@@ -28,7 +29,6 @@ def main():
     while True:
         action,_states = model.predict(ob)
         ob, _, done, _ = env.step(action)
-        print(action)
         env.render()
         time.sleep(0.01)
         if done:
