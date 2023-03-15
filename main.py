@@ -66,7 +66,7 @@ def main(args):
 
         for i in range(args.iteration):
             print("iteration: ", i)
-            model.learn(total_timesteps=2500)
+            model.learn(total_timesteps=25000)
             env.reset()
         model.save("ppo_agent")
     else:
