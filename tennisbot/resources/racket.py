@@ -15,7 +15,14 @@ def set_angle(angle: float) -> float:
 
 ##############################################################################
 class Racket:
-    def __init__(self, client, pos=[0, 0, 0], enable_orientation=True):
+    def __init__(self, 
+                 client, pos=[0, 0, 0], 
+                 enable_orientation=True,
+                 time_step=1/240):
+        """
+        init the racket object with default position, orientation, 
+        and time step for PID
+        """
         self.enable_orientation = enable_orientation
         self.client = client
         f_name = os.path.join(os.path.dirname(__file__), 'racket.urdf')
@@ -30,15 +37,16 @@ class Racket:
         ki = 0.2
         maxForce = 10.0
         maxTorque = 3.0
+        self.time_step = time_step
 
         self.pos_controller = [
             PID(kp, ki, kd,
-                output_limits=(-maxForce, maxForce)) for i in range(3)
+                output_limits=(-maxForce, maxForce), sample_time=1/400) for i in range(3)
         ]
 
         self.ori_controller = [
             PID(kp, ki, kd,
-                output_limits=(-maxTorque, maxTorque)) for i in range(3)
+                output_limits=(-maxTorque, maxTorque), sample_time=1/400) for i in range(3)
         ]
 
     def get_ids(self) -> Tuple:
@@ -74,17 +82,17 @@ class Racket:
         # Control the racket position, default z-force to compensate gravity
         apply_force = [0, 0, 4]
         for i in range(3):
-            apply_force[i] += self.pos_controller[i](pose[i])
+            apply_force[i] += self.pos_controller[i](pose[i], self.time_step)
         p.applyExternalForce(
             self.id, -1, apply_force, pose[:3], p.WORLD_FRAME)
 
         # Control the racket orientation
         apply_torque = [0, 0, 0]
         for i in range(3):
-            apply_torque[i] = self.ori_controller[i](pose[i+3])
+            apply_torque[i] = self.ori_controller[i](pose[i+3], self.time_step)
 
         p.applyExternalTorque(self.id, -1, apply_torque, p.WORLD_FRAME)
-
+    
     def get_observation(self) -> List[float]:
         """
         Get the position and orientation of the racket in the simulation

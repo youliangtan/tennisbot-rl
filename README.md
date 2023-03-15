@@ -31,8 +31,12 @@ python3 playground.py
 
 Run gym training
 ```bash
-# run default trpo agent with 100 iteratios
-python3 main.py -i 100
+python3 train.py
+```
+
+Run validate
+```bash
+python3 validate.py
 ```
 
 ## Notes
