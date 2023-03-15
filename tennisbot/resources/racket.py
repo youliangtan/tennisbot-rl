@@ -25,20 +25,20 @@ class Racket:
 
         # Define PID controller gains
         # NOTE: this is tested in playground.py
-        kp = 1.0
-        kd = 0.8
-        ki = 0.2
+        kp = 3.0
+        kd = 1.5
+        ki = 0.1
         maxForce = 10.0
         maxTorque = 3.0
 
         self.pos_controller = [
             PID(kp, ki, kd,
-                output_limits=(-maxForce, maxForce)) for i in range(3)
+                output_limits=(-maxForce, maxForce), sample_time=1/400) for i in range(3)
         ]
 
         self.ori_controller = [
             PID(kp, ki, kd,
-                output_limits=(-maxTorque, maxTorque)) for i in range(3)
+                output_limits=(-maxTorque, maxTorque), sample_time=1/400) for i in range(3)
         ]
 
     def get_ids(self) -> Tuple:
@@ -74,14 +74,14 @@ class Racket:
         # Control the racket position, default z-force to compensate gravity
         apply_force = [0, 0, 4]
         for i in range(3):
-            apply_force[i] += self.pos_controller[i](pose[i])
+            apply_force[i] += self.pos_controller[i](pose[i],1/240)
         p.applyExternalForce(
             self.id, -1, apply_force, pose[:3], p.WORLD_FRAME)
 
         # Control the racket orientation
         apply_torque = [0, 0, 0]
         for i in range(3):
-            apply_torque[i] = self.ori_controller[i](pose[i+3])
+            apply_torque[i] = self.ori_controller[i](pose[i+3],1/240)
 
         p.applyExternalTorque(self.id, -1, apply_torque, p.WORLD_FRAME)
 

@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+*.zip
+ppo_log/
+saved_model/
+tmp/

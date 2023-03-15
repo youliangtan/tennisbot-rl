@@ -253,7 +253,6 @@ class TRPOAgent:
             for step in range(batch_size):
                 # Take step with agent
                 observation, reward, done, _ = env.step(self(observation))
-
                 # Recording, increment episode values
                 recording['episode_length'][-1] += 1
                 recording['episode_reward'][-1].append(reward)
