@@ -8,6 +8,7 @@ from math import pi as PI
 import pybullet as p
 import matplotlib.pyplot as plt
 import time
+import random
 
 from tennisbot.resources.racket import Racket
 from tennisbot.resources.objects import Court, Ball
@@ -71,6 +72,7 @@ class TennisbotEnv(gym.Env):
         self.court_ball_contact_count = 0
         self.prev_action = None
         self.step_count = 0
+
     def step(self, action):
         # Feed action to the racket and get observation of racket's state
         action = np.append(action, [1.5, 0, 0, 0])
@@ -79,12 +81,20 @@ class TennisbotEnv(gym.Env):
 
         # Shoot the ball
         if self.step_count < BALL_SHOOT_FRAMES:
-            self.ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
+            self.ball.apply_force([
+                random.uniform(BALL_FORCE*0.8, BALL_FORCE*1.1),
+                random.uniform(-BALL_FORCE, BALL_FORCE),
+                BALL_FORCE*2.2])
+
+        # # Shoot the ball
+        # if self.step_count < BALL_SHOOT_FRAMES:
+        #     self.ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
 
         p.stepSimulation()
         self.step_count += 1
         if DELAY_MODE:
-            time.sleep(0.003)
+            # time.sleep(1./24000.)
+            time.sleep(1/240.)
 
         # set reward depends on y-z distance of racket and ball
         # Compute reward as L2 change in distance
@@ -130,7 +140,7 @@ class TennisbotEnv(gym.Env):
         return [seed]
 
     def reset(self):
-        # print("Reset environment!")
+        print("Reset environment!")
         p.resetSimulation(self.client)
         p.setGravity(0, 0, -10)
         self.step_count = 0

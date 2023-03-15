@@ -10,14 +10,12 @@ import argparse
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.callbacks import EvalCallback
 
-
-
 tmp_path = "./tmp/ppo/"
 
 # new_logger = configure(tmp_path, ["stdout", "csv", "tensorboard"])
 LOAD_MODEL = True
 
-def main():
+def main(args):
 
     # Use PPO agent
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
@@ -25,8 +23,9 @@ def main():
     env = gym.make('Tennisbot-v0')
     model = PPO("MlpPolicy", env, verbose=0,tensorboard_log=tmp_path)
 
-    if LOAD_MODEL:
-        model.load(tmp_path+'best_model.zip')
+    if args.load:
+        model.load(tmp_path+'ppo_agent.zip')
+
     # model.set_logger(new_logger)
     eval_callback = EvalCallback(env, best_model_save_path=tmp_path,
                                 log_path=tmp_path, eval_freq=total_timesteps,
@@ -38,11 +37,13 @@ def main():
         env.reset()
         if i%100 == 99:
             print(f"saving {i+1}th file")
-            model.save("ppo_agent")
+            model.save("ppo_agent.zip")
 
-
-
-
+##############################################################################
 
 if __name__ == '__main__':
-    main()
+    print("start running")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--load', action='store_true', help="load model")
+    args = parser.parse_args()
+    main(args)

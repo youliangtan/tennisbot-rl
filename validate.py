@@ -10,7 +10,7 @@ import argparse
 
 
 
-tmp_path = "./tmp/ppo/"
+# tmp_path = "./tmp/ppo/"
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     # model = PPO("MlpPolicy", env, verbose=0,tensorboard_log="./ppo_log/")
     env = gym.make('Tennisbot-v0')
 
-    model =PPO.load(tmp_path + "best_model")
+    model =PPO.load("ppo_agent.zip")
 
     print("start running")
     
