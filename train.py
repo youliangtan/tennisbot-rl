@@ -15,24 +15,26 @@ from stable_baselines3.common.callbacks import EvalCallback
 tmp_path = "./tmp/ppo/"
 
 # new_logger = configure(tmp_path, ["stdout", "csv", "tensorboard"])
-
+LOAD_MODEL = True
 
 def main():
 
     # Use PPO agent
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
-
+    total_timesteps = 25000
     env = gym.make('Tennisbot-v0')
     model = PPO("MlpPolicy", env, verbose=0,tensorboard_log=tmp_path)
-    # model = PPO.load("ppo_agent")
+
+    if LOAD_MODEL:
+        model.load("ppo_agent")
     # model.set_logger(new_logger)
-    # eval_callback = EvalCallback(env, best_model_save_path=tmp_path,
-    #                             log_path=tmp_path, eval_freq=500,
-    #                             deterministic=True, render=False)
+    eval_callback = EvalCallback(env, best_model_save_path=tmp_path,
+                                log_path=tmp_path, eval_freq=total_timesteps,
+                                deterministic=True, render=False)
 
     for i in range(1000):
         print("iteration: ", i)
-        model.learn(total_timesteps=2200,callback=None)
+        model.learn(total_timesteps=total_timesteps,callback=eval_callback)
         env.reset()
         if i%100 == 99:
             print(f"saving {i+1}th file")

@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 *.zip
 ppo_log/
+saved_model/
+tmp/

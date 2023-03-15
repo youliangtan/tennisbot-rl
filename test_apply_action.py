@@ -24,9 +24,9 @@ def main():
 
     while True:
         ob, _, done, _ = env.step(action)
-        print(action)
+        print(ob[:3])
         env.render()
-        time.sleep(0.01)
+        time.sleep(1/240)
         # if done:
         #     ob = env.reset()
         #     time.sleep(1)

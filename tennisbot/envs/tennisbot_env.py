@@ -16,8 +16,8 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = True
-DELAY_MODE = True
+GUI_MODE = False
+DELAY_MODE = False
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5
 ENABLE_ORIENTATION = False
@@ -70,7 +70,7 @@ class TennisbotEnv(gym.Env):
         self.reset()
         self.court_ball_contact_count = 0
         self.prev_action = None
-
+        self.step_count = 0
     def step(self, action):
         # Feed action to the racket and get observation of racket's state
         action = np.append(action, [1.5, 0, 0, 0])
@@ -133,6 +133,7 @@ class TennisbotEnv(gym.Env):
         # print("Reset environment!")
         p.resetSimulation(self.client)
         p.setGravity(0, 0, -10)
+        self.step_count = 0
 
         # Reload the tennis court and racket
         self.court = Court(self.client)
