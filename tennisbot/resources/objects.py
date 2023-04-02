@@ -34,6 +34,7 @@ class Court:
 class Ball:
     def __init__(self, client, pos=[0, 0, 0]):
         f_name = os.path.join(os.path.dirname(__file__), 'ball.urdf')
+        self.born_pos = pos
         self.id = p.loadURDF(  
             fileName=f_name, basePosition=pos, physicsClientId=client)
         self.client = client
@@ -65,6 +66,7 @@ class Ball:
             pos (list): ball position
         """
         f_name = os.path.join(os.path.dirname(__file__), 'ball.urdf')
+        self.born_pos = pos
         self.id = p.loadURDF(  
             fileName=f_name, basePosition=pos, physicsClientId=self.client)
 
@@ -85,6 +87,13 @@ class Ball:
         rand_x = random.randint(range_x[0], range_x[1])
         rand_y = random.randint(range_y[0], range_y[1])
         rand_z = random.randint(range_z[0], range_z[1])
-        # random force
+
         randomlist = [rand_x, rand_y, rand_z]
         self.set_pos(randomlist)
+        
+    def get_pos(self):
+        """get the position the ball was born at.
+        Returns:
+            list: the position [x,y,z]
+        """
+        return self.born_pos

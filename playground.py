@@ -50,10 +50,16 @@ def main():
         p.removeBody(bodyUniqueId=racket.id)
         
         # random pos of the ball
-        ball.random_pos([-12,-3],[-5,5],[0,4])      
+        ball.random_pos([-12,-3],[-4,4],[0,3])      
         
         # random pos of the racket
         racket.random_pos([5,12],[-3,3],[0,2])
+        
+        # set target pos related to the ball born pos
+        ball_pos = ball.get_pos()
+        
+        targetPos = [ball_pos[0]+20, ball_pos[1], 0.5]
+        racket.set_target_location(targetPos + targetOri)
         
         print(" ============ ith simulation ============ ")
         for i in range (3000):
