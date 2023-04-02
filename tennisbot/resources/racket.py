@@ -5,6 +5,7 @@ import os
 import math
 from typing import Tuple, List
 from simple_pid import PID
+import random
 
 ##############################################################################
 def set_angle(angle: float) -> float:
@@ -103,3 +104,31 @@ class Racket:
         pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
         ori = p.getEulerFromQuaternion(ang)
         return pos + ori
+    
+    
+    def set_pos(self, pos):
+        """set position for the racket
+        Args:
+            pos (list): the position [x,y,z]
+        """
+        f_name = os.path.join(os.path.dirname(__file__), 'racket.urdf')
+        self.id = p.loadURDF(fileName=f_name,
+                              basePosition=pos,
+                              physicsClientId=self.client)
+
+    
+    def random_pos(self, range_x, range_y, range_z):
+        """set a random position of the racket within given ranges.
+
+        Args:
+            range_x (list): rnage of x randomness
+            range_y (list): range of y randomness
+            range_z (list): range of z randomness
+        """
+        # random position 
+        rand_x = random.randint(range_x[0], range_x[1])
+        rand_y = random.randint(range_y[0], range_y[1])
+        rand_z = random.randint(range_z[0], range_z[1])
+        # random force
+        randomlist = [rand_x, rand_y, rand_z]
+        self.set_pos(randomlist)
