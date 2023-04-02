@@ -14,7 +14,7 @@ from tennisbot.resources.racket import Racket
 
 BALL_START_SHOOT_FRAME = 300
 BALL_SHOOT_FRAMES = 450
-BALL_FORCE = 5
+BALL_FORCE = 5.5
 
 ##############################################################################
 
@@ -38,34 +38,43 @@ def main():
 
     racket = Racket(pybullet_client, pos=[3,0.1,0.8])
 
-    targetPos = [6.8, 0.1, 1]
+    targetPos = [12, 0.1, 1]
     targetOri = [-1.57, 0, 0]
     racket.set_target_location(targetPos + targetOri)
 
     ##################################################################################
     # Run Simulation
-    time_step = 0.001
-    p.setTimeStep(time_step)
-    
-    for i in range (10000):
-        # shoot ball
-        if BALL_START_SHOOT_FRAME < i < BALL_SHOOT_FRAMES+BALL_START_SHOOT_FRAME:
-            ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
+    for i_sim in range(3):
+        # remove the last ball and racket
+        p.removeBody(bodyUniqueId=ball.id)
+        p.removeBody(bodyUniqueId=racket.id)
         
-        racket.apply_pid_force_torque()
+        # random pos of the ball
+        ball.random_pos([-12,-3],[-5,5],[0,4])      
+        
+        # random pos of the racket
+        racket.random_pos([5,12],[-3,3],[0,2])
+        
+        print(" ============ ith simulation ============ ")
+        for i in range (3000):
+            
+            # shoot ball
+            if BALL_START_SHOOT_FRAME < i < BALL_SHOOT_FRAMES+BALL_START_SHOOT_FRAME:
+                ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
+            
+            racket.apply_pid_force_torque()
 
-        # get collision info
-        contacts = p.getContactPoints(racket.id, ball.id)
-        if len(contacts) > 0:
-            print("Racket and ball are in collision!!")
+            # get collision info
+            contacts = p.getContactPoints(racket.id, ball.id)
+            if len(contacts) > 0:
+                print("Racket and ball are in collision!!")
 
-        contacts = p.getContactPoints(court.id, ball.id)
-        if len(contacts) > 0:
-            print("Court and ball are in collision!!")
+            contacts = p.getContactPoints(court.id, ball.id)
+            if len(contacts) > 0:
+                print("Court and ball are in collision!!")
 
-        p.stepSimulation()
-        time.sleep(time_step)
-
+            p.stepSimulation()
+            time.sleep(1./240.)
     p.disconnect()
 
 if __name__ == '__main__':

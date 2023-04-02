@@ -53,9 +53,20 @@ def main(args):
             print("loading previously trained PPO model")
             model.load("ppo_agent")
 
+        # # run model
+        # while True:
+        #     print("Try inference")
+        #     obs = env.reset()
+        #     action = [3,4]
+        #     for i in range(3500):
+        #         # action, state = model.predict(obs, deterministic=True)
+        #         obs, reward, done, info = env.step(action)
+        #         env.render()
+        #         time.sleep(0.01)
+
         for i in range(args.iteration):
             print("iteration: ", i)
-            model.learn(total_timesteps=2500)
+            model.learn(total_timesteps=25000)
             env.reset()
         model.save("ppo_agent")
     else:

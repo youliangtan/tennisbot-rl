@@ -3,6 +3,7 @@
 import pybullet as p
 from typing import Tuple, List
 import os
+import random
 
 ##############################################################################
 class Plane:
@@ -56,3 +57,34 @@ class Ball:
         """
         pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
         p.applyExternalForce(self.id, -1, force, pos, p.WORLD_FRAME)
+        
+    def set_pos(self, pos):
+        """
+        Set a new pos to the ball.
+        Args:
+            pos (list): ball position
+        """
+        f_name = os.path.join(os.path.dirname(__file__), 'ball.urdf')
+        self.id = p.loadURDF(  
+            fileName=f_name, basePosition=pos, physicsClientId=self.client)
+
+        # Make bouncey ball
+        p.changeDynamics(self.id, -1, restitution=0.9)
+        p.changeDynamics(self.id, -1, lateralFriction=0.2)
+        p.changeDynamics(self.id, -1, rollingFriction=0.001)
+        
+    def random_pos(self, range_x, range_y, range_z):
+        """set a random position to the ball within given ranges.
+
+        Args:
+            range_x (list): rnage of x randomness
+            range_y (list): range of y randomness
+            range_z (list): range of z randomness
+        """
+        # random position 
+        rand_x = random.randint(range_x[0], range_x[1])
+        rand_y = random.randint(range_y[0], range_y[1])
+        rand_z = random.randint(range_z[0], range_z[1])
+        # random force
+        randomlist = [rand_x, rand_y, rand_z]
+        self.set_pos(randomlist)
