@@ -132,3 +132,18 @@ class Racket:
         # random force
         randomlist = [rand_x, rand_y, rand_z]
         self.set_pos(randomlist)
+        
+        
+    def update_pid(self, kp, ki, kd, maxForce = 10.0, maxTorque = 3.0):
+        """
+        Update the pid parameters
+        """
+        self.pos_controller = [
+            PID(kp, ki, kd,
+                output_limits=(-maxForce, maxForce), sample_time=1/400) for i in range(3)
+        ]
+
+        self.ori_controller = [
+            PID(kp, ki, kd,
+                output_limits=(-maxTorque, maxTorque), sample_time=1/400) for i in range(3)
+        ]

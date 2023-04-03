@@ -41,6 +41,12 @@ def main():
     targetPos = [12, 0.1, 1]
     targetOri = [-1.57, 0, 0]
     racket.set_target_location(targetPos + targetOri)
+    
+    kp = 10.0
+    kd = 2.0
+    ki = 0.001
+    
+    racket.update_pid(kp, ki, kd)
 
     ##################################################################################
     # Run Simulation
@@ -58,7 +64,9 @@ def main():
         # set target pos related to the ball born pos
         ball_pos = ball.get_pos()
         
-        targetPos = [ball_pos[0]+20, ball_pos[1], 0.5]
+        targetPos = [min(13, ball_pos[0]+20), ball_pos[1], 0.5]
+        print("--- targetPos ---")
+        print(targetPos)
         racket.set_target_location(targetPos + targetOri)
         
         print(" ============ ith simulation ============ ")
@@ -75,9 +83,9 @@ def main():
             if len(contacts) > 0:
                 print("Racket and ball are in collision!!")
 
-            contacts = p.getContactPoints(court.id, ball.id)
-            if len(contacts) > 0:
-                print("Court and ball are in collision!!")
+            # contacts = p.getContactPoints(court.id, ball.id)
+            # if len(contacts) > 0:
+                # print("Court and ball are in collision!!")
 
             p.stepSimulation()
             time.sleep(1./240.)
