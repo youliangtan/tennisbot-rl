@@ -18,7 +18,7 @@ from tennisbot.resources.objects import Court, Ball
 # Configurations
 
 GUI_MODE = True
-DELAY_MODE = False
+TIME_DELAY = 1/2400
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5
 ENABLE_ORIENTATION = False
@@ -39,7 +39,7 @@ class TennisbotEnv(gym.Env):
             ## NOTE: This is the simplified action space in 2DOF x, y axis
             low=np.array([2.0, -5.0], dtype=np.float32),
             high=np.array([6.8, 5.0], dtype=np.float32))
-        
+
             ## NOTE: This is the original action space in 6DOF
             # low=np.array([5.0, -5.0, 0.0, -PI, -PI, -PI], dtype=np.float32),
             # high=np.array([20.0, 5.0, 5.0, PI, PI, PI], dtype=np.float32))
@@ -79,7 +79,7 @@ class TennisbotEnv(gym.Env):
         self.racket.apply_action(action)
         # print("action: ", action)
 
-        # Shoot the ball
+        # Randomly shoot the ball out
         if self.step_count < BALL_SHOOT_FRAMES:
             self.ball.apply_force([
                 random.uniform(BALL_FORCE*0.8, BALL_FORCE*1.1),
@@ -92,9 +92,7 @@ class TennisbotEnv(gym.Env):
 
         p.stepSimulation()
         self.step_count += 1
-        if DELAY_MODE:
-            # time.sleep(1./24000.)
-            time.sleep(1/240.)
+        time.sleep(TIME_DELAY)
 
         # set reward depends on y-z distance of racket and ball
         # Compute reward as L2 change in distance
@@ -148,9 +146,17 @@ class TennisbotEnv(gym.Env):
         # Reload the tennis court and racket
         self.court = Court(self.client)
 
-        # TODO: Randomly set the location of the racket and ball
-        self.racket = Racket(self.client, [6.5, 0.5, 0.5], ENABLE_ORIENTATION)
+        # Randomly set the location of the racket and ball
+        self.racket = Racket(
+            self.client, [6.5, 0.5, 0.5], ENABLE_ORIENTATION, TIME_DELAY)
+        x, y, z, _, _, _ = self.racket.get_observation()
+        self.racket.random_pos(
+            range_x=[x-2, x+2], range_y=[y-2, y+2], range_z=[z, z+0.5])
+
         self.ball = Ball(self.client, pos=[-9,0,1])
+        x, y, z = self.ball.get_observation()
+        self.ball.random_pos(
+            range_x=[x-2, x+2], range_y=[y-2, y+2], range_z=[z, z+0.5])
 
         self.done = False
         self.step_count = 0

@@ -22,6 +22,7 @@ def main(args):
     total_timesteps = 25000
     env = gym.make('Tennisbot-v0')
     model = PPO("MlpPolicy", env, verbose=0,tensorboard_log=tmp_path)
+    print(model.policy)
 
     if args.load:
         model.load(tmp_path+'ppo_agent.zip')
