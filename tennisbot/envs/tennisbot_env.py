@@ -17,7 +17,7 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = False
+GUI_MODE = True
 DELAY_MODE = False
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5
@@ -126,13 +126,16 @@ class TennisbotEnv(gym.Env):
             yz_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
                                 (ball_pose[1] - racket_pose[1]) ** 2 +
                                 (ball_pose[0] - racket_pose[0]) ** 2))
-            reward = yz_dist
-            reward = max(self.prev_ball_racket_yz_dist - yz_dist, 0)
+            # reward = yz_dist
+            # reward = max(self.prev_ball_racket_yz_dist - yz_dist, 0)
+            if (yz_dist) < 0.5:
+                reward = reward + 1
+                
             self.prev_ball_racket_yz_dist = yz_dist
             # print("reward", reward)
         
-        for i_action in range(3):
-            reward = reward - 5e-5*action[i_action]**2
+        # for i_action in range(3):
+        #     reward = reward - 5e-5*action[i_action]**2
         
         # reward = max(1*math.exp(-yz_dist*10+1e-10), 0)
         # reward = 0
