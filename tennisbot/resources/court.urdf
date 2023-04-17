@@ -41,8 +41,8 @@
       </visual>
       <collision> 
         <geometry> 
-          <box size="0.194382 12.6506 1"/>
-          <origin rpy="0 0 0" xyz="12.0139 0.00204 0.5"/>
+          <box size="20 20 0.01"/>
+          <origin rpy="0 0 0" xyz="-10 -10 -0.005"/>
         </geometry>
         <surface>
         <contact>

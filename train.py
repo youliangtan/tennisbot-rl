@@ -25,12 +25,14 @@ def main(args):
     batch_size = 1024
     rollout_steps = 1024
     env = gym.make('Tennisbot-v0')
+
     model = PPO("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_ppo, batch_size=batch_size, n_steps=rollout_steps, n_epochs=n_epochs)
     # model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)
     
     # if args.load:
     #     model.load(tmp_path+'ppo_agent.zip')
     # model.load('model/ppo/best_model.zip')
+
 
     # model.set_logger(new_logger)
     eval_callback = EvalCallback(env, best_model_save_path=model_save_path_ppo,

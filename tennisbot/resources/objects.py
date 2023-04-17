@@ -9,8 +9,13 @@ import random
 class Plane:
     def __init__(self, client, pos=[0, 0, 0]):
         f_name = os.path.join(os.path.dirname(__file__), 'simpleplane.urdf')
-        p.loadURDF(
+        id = p.loadURDF(
             fileName=f_name, basePosition=pos, physicsClientId=client)
+        
+        # Make bouncey plane
+        p.changeDynamics(id, -1, restitution=0.9)
+        p.changeDynamics(id, -1, lateralFriction=0.2)
+        p.changeDynamics(id, -1, rollingFriction=0.001)
 
 ##############################################################################
 
@@ -59,22 +64,14 @@ class Ball:
         pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
         p.applyExternalForce(self.id, -1, force, pos, p.WORLD_FRAME)
         
-    def set_pos(self, pos):
+    def reset_pos(self, pos):
         """
-        Set a new pos to the ball.
+        Reset a new pos to the ball.
         Args:
             pos (list): ball position
         """
-        f_name = os.path.join(os.path.dirname(__file__), 'ball.urdf')
-        self.born_pos = pos
-        self.id = p.loadURDF(  
-            fileName=f_name, basePosition=pos, physicsClientId=self.client)
+        p.resetBasePositionAndOrientation(self.id, pos, [0, 0, 0, 1], self.client)
 
-        # Make bouncey ball
-        p.changeDynamics(self.id, -1, restitution=0.9)
-        p.changeDynamics(self.id, -1, lateralFriction=0.2)
-        p.changeDynamics(self.id, -1, rollingFriction=0.001)
-        
     def random_pos(self, range_x, range_y, range_z):
         """set a random position to the ball within given ranges.
 
@@ -84,16 +81,9 @@ class Ball:
             range_z (list): range of z randomness
         """
         # random position 
-        rand_x = random.randint(range_x[0], range_x[1])
-        rand_y = random.randint(range_y[0], range_y[1])
-        rand_z = random.randint(range_z[0], range_z[1])
+        rand_x = random.uniform(range_x[0], range_x[1])
+        rand_y = random.uniform(range_y[0], range_y[1])
+        rand_z = random.uniform(range_z[0], range_z[1])
 
         randomlist = [rand_x, rand_y, rand_z]
-        self.set_pos(randomlist)
-        
-    def get_pos(self):
-        """get the position the ball was born at.
-        Returns:
-            list: the position [x,y,z]
-        """
-        return self.born_pos
+        self.reset_pos(randomlist)

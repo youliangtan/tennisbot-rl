@@ -17,7 +17,8 @@ def set_angle(angle: float) -> float:
 ##############################################################################
 class Racket:
     def __init__(self, 
-                 client, pos=[0, 0, 0], 
+                 client,
+                 pos=[0, 0, 0], 
                  enable_orientation=True,
                  time_step=1/240):
         """
@@ -49,6 +50,7 @@ class Racket:
             PID(kp, ki, kd,
                 output_limits=(-maxTorque, maxTorque), sample_time=1/240) for i in range(3)
         ]
+
 
     def get_ids(self) -> Tuple:
         return self.id, self.client
@@ -118,21 +120,19 @@ class Racket:
         """
         pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
         ori = p.getEulerFromQuaternion(ang)
+
         # return pos + ori
         return pos
+
     
-    
-    def set_pos(self, pos):
-        """set position for the racket
+    def reset_pos(self, pos):
+        """reset position for the racket
         Args:
             pos (list): the position [x,y,z]
         """
-        f_name = os.path.join(os.path.dirname(__file__), 'racket.urdf')
-        self.id = p.loadURDF(fileName=f_name,
-                              basePosition=pos,
-                              physicsClientId=self.client)
+        p.resetBasePositionAndOrientation(self.id, pos, [0, 0, 0, 1], self.client)
 
-    
+
     def random_pos(self, range_x, range_y, range_z):
         """set a random position of the racket within given ranges.
 
@@ -142,13 +142,13 @@ class Racket:
             range_z (list): range of z randomness
         """
         # random position 
-        rand_x = random.randint(range_x[0], range_x[1])
-        rand_y = random.randint(range_y[0], range_y[1])
-        rand_z = random.randint(range_z[0], range_z[1])
+        rand_x = random.uniform(range_x[0], range_x[1])
+        rand_y = random.uniform(range_y[0], range_y[1])
+        rand_z = random.uniform(range_z[0], range_z[1])
         # random force
         randomlist = [rand_x, rand_y, rand_z]
-        self.set_pos(randomlist)
-        
+        self.reset_pos(randomlist)
+
         
     def update_pid(self, kp, ki, kd, maxForce = 10.0, maxTorque = 3.0):
         """
@@ -156,10 +156,12 @@ class Racket:
         """
         self.pos_controller = [
             PID(kp, ki, kd,
-                output_limits=(-maxForce, maxForce), sample_time=1/400) for i in range(3)
+                output_limits=(-maxForce, maxForce),
+                sample_time=self.time_step) for i in range(3)
         ]
 
         self.ori_controller = [
             PID(kp, ki, kd,
-                output_limits=(-maxTorque, maxTorque), sample_time=1/400) for i in range(3)
+                output_limits=(-maxTorque, maxTorque),
+                sample_time=self.time_step) for i in range(3)
         ]

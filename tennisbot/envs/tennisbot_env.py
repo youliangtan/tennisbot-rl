@@ -18,8 +18,10 @@ from tennisbot.resources.objects import Court, Ball
 # Configurations
 
 GUI_MODE = True
+
 DELAY_MODE = False
 BALL_SHOOT_FRAMES = 500
+
 BALL_FORCE = 5
 ENABLE_ORIENTATION = False
 
@@ -89,7 +91,7 @@ class TennisbotEnv(gym.Env):
         action[2] = action[2] + 4
         self.racket.apply_target_action(action)
 
-        # Shoot the ball
+        # Randomly shoot the ball out
         if self.step_count < BALL_SHOOT_FRAMES:
             self.ball.apply_force([
                 random.uniform(BALL_FORCE*0.9, BALL_FORCE*1.3),
@@ -98,9 +100,11 @@ class TennisbotEnv(gym.Env):
 
         p.stepSimulation()
         self.step_count += 1
+
         # if DELAY_MODE:
         #     # time.sleep(1./24000.)
         #     time.sleep(1/240.)
+
 
         # set reward depends on y-z distance of racket and ball
         # Compute reward as L2 change in distance
@@ -175,7 +179,11 @@ class TennisbotEnv(gym.Env):
 
         # TODO: Randomly set the location of the racket and ball
         self.racket = Racket(self.client, [9.5, 0, 0.2], ENABLE_ORIENTATION)
+
         self.ball = Ball(self.client, pos=[-9,0,1])
+        x, y, z = self.ball.get_observation()
+        self.ball.random_pos(
+            range_x=[x-2, x+2], range_y=[y-2, y+2], range_z=[z, z+0.5])
 
         self.done = False
         self.step_count = 0

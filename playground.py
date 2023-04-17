@@ -15,6 +15,7 @@ from tennisbot.resources.racket import Racket
 BALL_START_SHOOT_FRAME = 300
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5.5
+DELAY_TIME = 1/240
 
 ##############################################################################
 
@@ -28,15 +29,13 @@ def main():
     p.setGravity(0,0,-10)
 
     # Load model in world
-    planeId = p.loadURDF("plane.urdf")
-
     court = Court(pybullet_client)
     ball = Ball(pybullet_client, pos=[-9,0,1])
 
     # TODO: fix the wam7 robot with weird joint physics dynamics
     # tennisbot = p.loadURDF("robots/wam7.urdf", basePosition=[2, 0 , 1])
 
-    racket = Racket(pybullet_client, pos=[3,0.1,0.8])
+    racket = Racket(pybullet_client, pos=[3,0.1,0.8], time_step=DELAY_TIME)
 
     targetPos = [12, 0.1, 1]
     targetOri = [-1.57, 0, 0]
@@ -47,34 +46,27 @@ def main():
     ki = 0.001
     
     racket.update_pid(kp, ki, kd)
+    print("target location: ", racket.get_observation())
 
     ##################################################################################
     # Run Simulation
-    for i_sim in range(3):
-        # remove the last ball and racket
-        p.removeBody(bodyUniqueId=ball.id)
-        p.removeBody(bodyUniqueId=racket.id)
-        
+    for i_sim in range(3):       
         # random pos of the ball
-        ball.random_pos([-12,-3],[-4,4],[0,3])      
-        
+        ball.random_pos([-12,-3],[-4,4],[0,3])
+
         # random pos of the racket
         racket.random_pos([5,12],[-3,3],[0,2])
-        
-        # set target pos related to the ball born pos
-        ball_pos = ball.get_pos()
-        
-        targetPos = [min(13, ball_pos[0]+20), ball_pos[1], 0.5]
-        print("--- targetPos ---")
-        print(targetPos)
+
+        # set target pos
         racket.set_target_location(targetPos + targetOri)
-        
+        print("target location: ", racket.get_observation())
+
         print(" ============ ith simulation ============ ")
         for i in range (3000):
             
             # shoot ball
             if BALL_START_SHOOT_FRAME < i < BALL_SHOOT_FRAMES+BALL_START_SHOOT_FRAME:
-                ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
+                ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2])
             
             racket.apply_pid_force_torque()
 
@@ -88,7 +80,7 @@ def main():
                 # print("Court and ball are in collision!!")
 
             p.stepSimulation()
-            time.sleep(1./240.)
+            time.sleep(DELAY_TIME)
     p.disconnect()
 
 if __name__ == '__main__':
