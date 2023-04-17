@@ -4,8 +4,8 @@ import gym
 import torch
 import tennisbot
 import time
-# from stable_baselines3 import PPO
-from stable_baselines3 import SAC
+from stable_baselines3 import PPO
+# from stable_baselines3 import SAC
 import argparse
 
 
@@ -20,8 +20,8 @@ def main():
     # model = PPO("MlpPolicy", env, verbose=0,tensorboard_log="./ppo_log/")
     env = gym.make('Tennisbot-v0')
 
-    # model =PPO.load("ppo_agent.zip")
-    model = SAC.load("sac_agent_80.zip")
+    model = PPO.load("model/ppo/best_model.zip")
+    # model = SAC.load("sac_agent_80.zip")
 
     print("------------- start running -------------")
     

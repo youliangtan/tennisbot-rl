@@ -13,37 +13,32 @@ from stable_baselines3.common.callbacks import EvalCallback
 tmp_path_ppo = "./tmp/ppo/"
 tmp_path_sac = "./tmp/sac/"
 
-# new_logger = configure(tmp_path, ["stdout", "csv", "tensorboard"])
-# LOAD_MODEL = False
+model_save_path_ppo = "./model/ppo/"
 
 def main(args):
 
     # Use PPO agent
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
-    total_timesteps = 5000
+    total_timesteps = 1e6
+    evaluation_frequency = 500
+    n_epochs = int(total_timesteps / evaluation_frequency)
+    batch_size = 512
+    rollout_steps = 2048
     env = gym.make('Tennisbot-v0')
-    # model = PPO("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_ppo, batch_size=2048)
-    model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)
+    model = PPO("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_ppo, batch_size=batch_size, n_steps=rollout_steps, n_epochs=n_epochs)
+    # model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)
     
     # if args.load:
     #     model.load(tmp_path+'ppo_agent.zip')
-    model.load('sac_agent_20.zip')
+    # model.load('model/ppo/best_model.zip')
 
     # model.set_logger(new_logger)
-    eval_callback = EvalCallback(env, best_model_save_path=tmp_path_sac,
-                                log_path=tmp_path_sac, eval_freq=total_timesteps,
+    eval_callback = EvalCallback(env, best_model_save_path=model_save_path_ppo,
+                                log_path=tmp_path_ppo, eval_freq=total_timesteps/n_epochs,
                                 deterministic=False, render=False)
 
-    for i in range(1, 1000):
-        print("---------- Epoch: ", i, "----------")
-        model.learn(total_timesteps=total_timesteps,callback=eval_callback, progress_bar=False)
-        # model.learn(total_timesteps=total_timesteps)
-        env.reset()
-        if i%20 == 0:
-            print(f"saving {i+1}th file")
-            # model.save("ppo_agent.zip")
-            model_file = "sac_agent_"+str(i)+".zip"
-            model.save(model_file)
+
+    model.learn(total_timesteps=total_timesteps,callback=eval_callback, progress_bar=True)
 
 ##############################################################################
 

@@ -17,7 +17,7 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = True
+GUI_MODE = False
 DELAY_MODE = False
 BALL_SHOOT_FRAMES = 450
 BALL_FORCE = 5
@@ -119,35 +119,32 @@ class TennisbotEnv(gym.Env):
             if self.court_ball_contact_count == 2: # arbitrary number
                 ball_pose_ground = self.ball.get_observation()
                 if (ball_pose_ground[0] < 0.0): # hit the opposite court
-                    reward = reward + 20
+                    print("Hit the ball to the opposite side of the court!")
+                    reward = reward + 2000
                 self.done = True
         
         if self.step_count > 800:
             yz_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
                                 (ball_pose[1] - racket_pose[1]) ** 2 +
                                 (ball_pose[0] - racket_pose[0]) ** 2))
-            # reward = yz_dist
+            reward = yz_dist
             # reward = max(self.prev_ball_racket_yz_dist - yz_dist, 0)
-            if (yz_dist) < 0.5:
-                reward = reward + 1
+            # if (yz_dist) < 0.5:
+            #     reward = reward + 1
                 
             self.prev_ball_racket_yz_dist = yz_dist
             # print("reward", reward)
         
         # for i_action in range(3):
         #     reward = reward - 5e-5*action[i_action]**2
-        
-        # reward = max(1*math.exp(-yz_dist*10+1e-10), 0)
-        # reward = 0
-
-        
+    
         # print("Reward: ", yz_dist)
 
         # get collision info
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
             print(" BINGO!!!! Ball hits the racket!")
-            reward = reward + 10
+            reward = reward + 1000
             # self.done = True
 
         # this is to prevent the agent making big moves
@@ -156,9 +153,6 @@ class TennisbotEnv(gym.Env):
 
         # Get observation of the racket and ball state
         ob = np.array(racket_pose[:3] + ball_pose[:3], dtype=np.float32)
-        
-        if (reward > 5):
-            print("reward", reward)
 
         return ob, reward, self.done, dict()
 
