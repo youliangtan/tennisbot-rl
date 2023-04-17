@@ -19,11 +19,11 @@ def main(args):
 
     # Use PPO agent
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
-    total_timesteps = 1e6
+    total_timesteps = 5e5
     evaluation_frequency = 500
     n_epochs = int(total_timesteps / evaluation_frequency)
-    batch_size = 512
-    rollout_steps = 2048
+    batch_size = 1024
+    rollout_steps = 1024
     env = gym.make('Tennisbot-v0')
     model = PPO("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_ppo, batch_size=batch_size, n_steps=rollout_steps, n_epochs=n_epochs)
     # model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)

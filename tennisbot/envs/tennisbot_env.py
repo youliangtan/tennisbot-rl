@@ -17,9 +17,9 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = False
+GUI_MODE = True
 DELAY_MODE = False
-BALL_SHOOT_FRAMES = 450
+BALL_SHOOT_FRAMES = 500
 BALL_FORCE = 5
 ENABLE_ORIENTATION = False
 
@@ -92,15 +92,15 @@ class TennisbotEnv(gym.Env):
         # Shoot the ball
         if self.step_count < BALL_SHOOT_FRAMES:
             self.ball.apply_force([
-                random.uniform(BALL_FORCE*0.8, BALL_FORCE*1.1),
+                random.uniform(BALL_FORCE*0.9, BALL_FORCE*1.3),
                 random.uniform(-BALL_FORCE, BALL_FORCE),
                 BALL_FORCE*2.2])
 
         p.stepSimulation()
         self.step_count += 1
-        if DELAY_MODE:
-            # time.sleep(1./24000.)
-            time.sleep(1/240.)
+        # if DELAY_MODE:
+        #     # time.sleep(1./24000.)
+        #     time.sleep(1/240.)
 
         # set reward depends on y-z distance of racket and ball
         # Compute reward as L2 change in distance
@@ -116,8 +116,9 @@ class TennisbotEnv(gym.Env):
             # print("Ball hits the court!")
             self.court_ball_contact_count += 1
                 
-            if self.court_ball_contact_count == 2: # arbitrary number
+            if self.court_ball_contact_count >= 2: # arbitrary number
                 ball_pose_ground = self.ball.get_observation()
+                print("second hitting x", ball_pose_ground[0])
                 if (ball_pose_ground[0] < 0.0): # hit the opposite court
                     print("Hit the ball to the opposite side of the court!")
                     reward = reward + 2000
@@ -135,6 +136,9 @@ class TennisbotEnv(gym.Env):
             self.prev_ball_racket_yz_dist = yz_dist
             # print("reward", reward)
         
+        if self.step_count > 1200:
+            self.done = True
+
         # for i_action in range(3):
         #     reward = reward - 5e-5*action[i_action]**2
     
@@ -170,7 +174,7 @@ class TennisbotEnv(gym.Env):
         self.court = Court(self.client)
 
         # TODO: Randomly set the location of the racket and ball
-        self.racket = Racket(self.client, [7.5, 0.5, 0.5], ENABLE_ORIENTATION)
+        self.racket = Racket(self.client, [9.5, 0, 0.2], ENABLE_ORIENTATION)
         self.ball = Ball(self.client, pos=[-9,0,1])
 
         self.done = False
