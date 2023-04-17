@@ -2,43 +2,45 @@
 
 import gym
 import torch
-from agent import TRPOAgent
 import tennisbot
 import time
 from stable_baselines3 import PPO
+from stable_baselines3 import SAC
 import argparse
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.callbacks import EvalCallback
 
-tmp_path = "./tmp/ppo/"
+tmp_path_ppo = "./tmp/ppo/"
+tmp_path_sac = "./tmp/sac/"
 
-# new_logger = configure(tmp_path, ["stdout", "csv", "tensorboard"])
-LOAD_MODEL = True
+model_save_path_ppo = "./model/ppo/"
 
 def main(args):
 
     # Use PPO agent
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
-    total_timesteps = 25000
+    total_timesteps = 5e5
+    evaluation_frequency = 500
+    n_epochs = int(total_timesteps / evaluation_frequency)
+    batch_size = 1024
+    rollout_steps = 1024
     env = gym.make('Tennisbot-v0')
-    model = PPO("MlpPolicy", env, verbose=0,tensorboard_log=tmp_path)
-    print(model.policy)
 
-    if args.load:
-        model.load(tmp_path+'ppo_agent.zip')
+    model = PPO("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_ppo, batch_size=batch_size, n_steps=rollout_steps, n_epochs=n_epochs)
+    # model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)
+    
+    # if args.load:
+    #     model.load(tmp_path+'ppo_agent.zip')
+    # model.load('model/ppo/best_model.zip')
+
 
     # model.set_logger(new_logger)
-    eval_callback = EvalCallback(env, best_model_save_path=tmp_path,
-                                log_path=tmp_path, eval_freq=total_timesteps,
-                                deterministic=True, render=False)
+    eval_callback = EvalCallback(env, best_model_save_path=model_save_path_ppo,
+                                log_path=tmp_path_ppo, eval_freq=total_timesteps/n_epochs,
+                                deterministic=False, render=False)
 
-    for i in range(1000):
-        print("iteration: ", i)
-        model.learn(total_timesteps=total_timesteps,callback=eval_callback)
-        env.reset()
-        if i%100 == 99:
-            print(f"saving {i+1}th file")
-            model.save("ppo_agent.zip")
+
+    model.learn(total_timesteps=total_timesteps,callback=eval_callback, progress_bar=True)
 
 ##############################################################################
 

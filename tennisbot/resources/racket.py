@@ -34,13 +34,23 @@ class Racket:
 
         # Define PID controller gains
         # NOTE: this is tested in playground.py
-        kp = 1.0
-        kd = 0.8
-        ki = 0.2
+        kp = 3.0
+        kd = 0.1
+        ki = 0.01
         maxForce = 10.0
         maxTorque = 3.0
         self.time_step = time_step
-        self.update_pid(kp, kd, ki, maxForce, maxTorque)
+
+        self.pos_controller = [
+            PID(kp, ki, kd, 
+                output_limits=(-maxForce, maxForce), sample_time=1/240) for i in range(3)
+        ]
+
+        self.ori_controller = [
+            PID(kp, ki, kd,
+                output_limits=(-maxTorque, maxTorque), sample_time=1/240) for i in range(3)
+        ]
+
 
     def get_ids(self) -> Tuple:
         return self.id, self.client
@@ -58,33 +68,48 @@ class Racket:
         """
         for i in range(3):
             self.pos_controller[i].setpoint = pose[i]
-            self.ori_controller[i].setpoint = pose[i+3]
+            # self.ori_controller[i].setpoint = pose[i+3]
 
         # This is some hack to disable orientation control
         # TODO: not really working, fix this
         if not self.enable_orientation:
             for i in range(3):
                 self.ori_controller[i].setpoint = 0
+                
+    
+    def apply_target_action(self, action):
+        """
+        Apply directly target force and torque.
+        """
+        pose = self.get_observation()
+        p.applyExternalForce(
+                self.id, -1, action[:3], pose[:3], p.WORLD_FRAME)
+            
+        # p.applyExternalTorque(self.id, -1, action[3:6], p.WORLD_FRAME)
+
 
     def apply_pid_force_torque(self):
         """
         Applying force and torque control to the racket
         """
+        
+        # for i_step in range(2):
+            
         pose = self.get_observation()
 
         # Control the racket position, default z-force to compensate gravity
         apply_force = [0, 0, 4]
+        # apply_torque = [0, 0, 0]
         for i in range(3):
             apply_force[i] += self.pos_controller[i](pose[i], self.time_step)
+            # apply_torque[i] = self.ori_controller[i](pose[i+3], self.time_step)
+            
+        # print("apply_force ", apply_force)
+        
         p.applyExternalForce(
             self.id, -1, apply_force, pose[:3], p.WORLD_FRAME)
-
-        # Control the racket orientation
-        apply_torque = [0, 0, 0]
-        for i in range(3):
-            apply_torque[i] = self.ori_controller[i](pose[i+3], self.time_step)
-
-        p.applyExternalTorque(self.id, -1, apply_torque, p.WORLD_FRAME)
+        
+        # p.applyExternalTorque(self.id, -1, apply_torque, p.WORLD_FRAME)
     
     def get_observation(self) -> List[float]:
         """
@@ -95,7 +120,9 @@ class Racket:
         """
         pos, ang = p.getBasePositionAndOrientation(self.id, self.client)
         ori = p.getEulerFromQuaternion(ang)
-        return pos + ori
+
+        # return pos + ori
+        return pos
 
     
     def reset_pos(self, pos):
