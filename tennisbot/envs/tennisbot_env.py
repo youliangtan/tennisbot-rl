@@ -175,7 +175,7 @@ class TennisbotEnv(gym.Env):
 
         # TODO: Randomly set the location of the racket and ball
         self.racket = Racket(self.client, [9.5, 0, 0.2], ENABLE_ORIENTATION)
-        self.ball = Ball(self.client, pos=[-9,0,1])
+        self.ball = Ball(self.client, pos=[-9.5,0,1])
 
         self.done = False
         self.step_count = 0

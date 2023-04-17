@@ -27,7 +27,8 @@
             <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
         </inertial> 
         <contact> 
-            <lateral_friction value="5"/>
+            <lateral_friction value="3"/>
+            <kd>0.0</kd>
         </contact>
 
       <visual> 
@@ -55,7 +56,8 @@
         <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
       </inertial> 
       <contact> 
-        <lateral_friction value="5"/>
+        <lateral_friction value="3"/>
+        <kd>0.0</kd>
       </contact>
     </link>
 </robot>

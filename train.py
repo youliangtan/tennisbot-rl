@@ -19,7 +19,7 @@ def main(args):
 
     # Use PPO agent
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
-    total_timesteps = 5e5
+    total_timesteps = 1e6
     evaluation_frequency = 500
     n_epochs = int(total_timesteps / evaluation_frequency)
     batch_size = 1024
