@@ -118,26 +118,25 @@ class TennisbotEnv(gym.Env):
                 
             if self.court_ball_contact_count >= 2: # arbitrary number
                 ball_pose_ground = self.ball.get_observation()
-                print("second hitting x", ball_pose_ground[0])
                 if (ball_pose_ground[0] < 0.0): # hit the opposite court
                     print("Hit the ball to the opposite side of the court!")
-                    reward = reward + 2000
+                    reward = reward + 1000
                 self.done = True
         
         if self.step_count > 800:
             yz_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
                                 (ball_pose[1] - racket_pose[1]) ** 2 +
                                 (ball_pose[0] - racket_pose[0]) ** 2))
-            reward = yz_dist
-            # reward = max(self.prev_ball_racket_yz_dist - yz_dist, 0)
+            # reward = 5 - yz_dist 
+            reward = 20*max(self.prev_ball_racket_yz_dist - yz_dist, 0)
             # if (yz_dist) < 0.5:
             #     reward = reward + 1
                 
             self.prev_ball_racket_yz_dist = yz_dist
             # print("reward", reward)
         
-        if self.step_count > 1200:
-            self.done = True
+        # if self.step_count > 1200:
+        #     self.done = True
 
         # for i_action in range(3):
         #     reward = reward - 5e-5*action[i_action]**2
@@ -148,7 +147,7 @@ class TennisbotEnv(gym.Env):
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
             print(" BINGO!!!! Ball hits the racket!")
-            reward = reward + 1000
+            reward = reward + 500
             # self.done = True
 
         # this is to prevent the agent making big moves

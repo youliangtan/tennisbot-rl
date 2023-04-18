@@ -8,9 +8,7 @@ from stable_baselines3 import PPO
 # from stable_baselines3 import SAC
 import argparse
 
-
 # tmp_path = "./tmp/ppo/"
-
 
 def main():
 
