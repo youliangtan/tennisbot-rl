@@ -24,6 +24,7 @@ BALL_SHOOT_FRAMES = 500
 
 BALL_FORCE = 5
 ENABLE_ORIENTATION = False
+PAST_BALL_POSE_COUNT = 3
 
 ##############################################################################
 
@@ -45,10 +46,12 @@ class TennisbotEnv(gym.Env):
             ## NOTE: This is the original action space in 6DOF
             # low=np.array([5.0, -5.0, 0.0, -PI, -PI, -PI], dtype=np.float32),
             # high=np.array([20.0, 5.0, 5.0, PI, PI, PI], dtype=np.float32))
+        
+        # the observation space is the racket's state + ball's state (trajectory)
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-20, -20, -5, -20, -20, 0],
+            low=np.array([-20, -20, -5] + [-20, -20, 0]*PAST_BALL_POSE_COUNT,
                          dtype=np.float32),
-            high=np.array([20, 20, 5, 20, 20, 5],
+            high=np.array([20, 20, 5]  + [20, 20, 5]*PAST_BALL_POSE_COUNT,
                           dtype=np.float32)
             # low=np.array([-20, -20, -5, -PI, -PI, -PI, -4, -4, -4],
             #              dtype=np.float32),
@@ -75,10 +78,12 @@ class TennisbotEnv(gym.Env):
         self.prev_ball_racket_yz_dist = None
         self.rendered_img = None
         self.render_rot_matrix = None
-        self.reset()
         self.court_ball_contact_count = 0
         self.prev_action = None
         self.step_count = 0
+        self.ball_past_traj = []
+
+        self.reset()
 
     def step(self, action):
         # Feed action to the racket and get observation of racket's state
@@ -159,8 +164,12 @@ class TennisbotEnv(gym.Env):
         # if self.prev_action is not None:
         #     reward -= np.linalg.norm(action - self.prev_action)/1000
 
+        # add current ball pose to the past ball trajectory
+        self.ball_past_traj = self.ball_past_traj[3:] + ball_pose
+        assert len(self.ball_past_traj) == PAST_BALL_POSE_COUNT*3
+
         # Get observation of the racket and ball state
-        ob = np.array(racket_pose[:3] + ball_pose[:3], dtype=np.float32)
+        ob = np.array(racket_pose[:3] + self.ball_past_traj, dtype=np.float32)
 
         return ob, reward, self.done, dict()
 
@@ -190,11 +199,14 @@ class TennisbotEnv(gym.Env):
         self.court_ball_contact_count = 0
 
         # Get observation to return
-        ball_pose = self.racket.get_observation()
-        racket_pose = self.ball.get_observation()
+        ball_pose = self.ball.get_observation()
+        racket_pose = self.racket.get_observation()
 
         self.prev_ball_racket_yz_dist = 0
-        return np.array(racket_pose[0:3] + ball_pose, dtype=np.float32)
+        
+        # for first init, we will assume all past ball locations are the same
+        self.ball_past_traj = ball_pose*PAST_BALL_POSE_COUNT
+        return np.array(racket_pose[0:3] + self.ball_past_traj, dtype=np.float32)
 
     def render(self, mode='human'):
         if self.rendered_img is None:
