@@ -17,7 +17,7 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = True
+GUI_MODE = False
 
 DELAY_MODE = False
 BALL_SHOOT_FRAMES = 500
@@ -91,9 +91,8 @@ class TennisbotEnv(gym.Env):
         # self.racket.apply_action(action)
         
         # print("action: ", action)
-        
-        # action = np.append(action, [0.0, 0, 0, 0])
-        action[2] = action[2] + 4
+       
+        action[2] += 4 # add a constant z-axis force to make it float
         self.racket.apply_target_action(action)
 
         # Randomly shoot the ball out
@@ -106,18 +105,15 @@ class TennisbotEnv(gym.Env):
         p.stepSimulation()
         self.step_count += 1
 
-        # if DELAY_MODE:
-        #     # time.sleep(1./24000.)
-        #     time.sleep(1/240.)
+        if DELAY_MODE:
+            # time.sleep(1./24000.)
+            time.sleep(1/240.)
 
 
-        # set reward depends on y-z distance of racket and ball
-        # Compute reward as L2 change in distance
         ball_pose = self.ball.get_observation()
         racket_pose = self.racket.get_observation()
         
         reward = 0       
-        yz_dist = 0
         
         # end the episode if the ball hits the court
         contacts_ball_ground = p.getContactPoints(self.court.id, self.ball.id)
@@ -127,37 +123,41 @@ class TennisbotEnv(gym.Env):
                 
             if self.court_ball_contact_count >= 2: # arbitrary number
                 ball_pose_ground = self.ball.get_observation()
-                print("second hitting x", ball_pose_ground[0])
+                print("second hit, x", ball_pose_ground[0])
                 if (ball_pose_ground[0] < 0.0): # hit the opposite court
                     print("Hit the ball to the opposite side of the court!")
-                    reward = reward + 2000
+                    reward = reward + 200
                 self.done = True
-        
-        if self.step_count > 800:
-            yz_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-                                (ball_pose[1] - racket_pose[1]) ** 2 +
-                                (ball_pose[0] - racket_pose[0]) ** 2))
-            reward = yz_dist
-            # reward = max(self.prev_ball_racket_yz_dist - yz_dist, 0)
-            # if (yz_dist) < 0.5:
-            #     reward = reward + 1
-                
-            self.prev_ball_racket_yz_dist = yz_dist
-            # print("reward", reward)
-        
+
+        # set reward depends on y-z distance of racket and ball
+        # Compute reward as L2 change in distance
+        delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
+                            (ball_pose[1] - racket_pose[1]) ** 2 +
+                            (ball_pose[0] - racket_pose[0]) ** 2))
+
+        # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
+        if delta_dist < 0.5:
+            reward += 10
+        elif delta_dist < 1.5:
+            reward += 5
+        else:
+            reward += 1
+        # self.prev_ball_racket_yz_dist = delta_dist
+
+        # penalize the racket if it hits the court
+        contact_racket_ground = p.getContactPoints(self.court.id, self.racket.id)
+        if len(contact_racket_ground) > 0:
+            print("Racket hits the court!")
+            reward -= 10
+
         if self.step_count > 1200:
             self.done = True
-
-        # for i_action in range(3):
-        #     reward = reward - 5e-5*action[i_action]**2
     
-        # print("Reward: ", yz_dist)
-
-        # get collision info
+       # get collision info
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
             print(" BINGO!!!! Ball hits the racket!")
-            reward = reward + 1000
+            reward = reward + 100
             # self.done = True
 
         # this is to prevent the agent making big moves
