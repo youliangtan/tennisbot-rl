@@ -32,6 +32,8 @@ python3 playground.py
 Run gym training
 ```bash
 python3 train.py
+# or 
+python3 train.py -s tuned_ppo
 ```
 
 Run validate

@@ -1,5 +1,37 @@
 #!/usr/bin/env python3
 
+"""
+Default PPO network
+ActorCriticPolicy(
+  (features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (pi_features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (vf_features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (mlp_extractor): MlpExtractor(
+    (shared_net): Sequential()
+    (policy_net): Sequential(
+      (0): Linear(in_features=12, out_features=64, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=64, out_features=64, bias=True)
+      (3): Tanh()
+    )
+    (value_net): Sequential(
+      (0): Linear(in_features=12, out_features=64, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=64, out_features=64, bias=True)
+      (3): Tanh()
+    )
+  )
+  (action_net): Linear(in_features=64, out_features=3, bias=True)
+  (value_net): Linear(in_features=64, out_features=1, bias=True)
+)
+"""
+
 import gym
 import torch.nn as nn
 from agent import TRPOAgent
@@ -10,6 +42,7 @@ from stable_baselines3 import SAC
 import argparse
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 tmp_path_ppo = "./tmp/ppo/"
 tmp_path_sac = "./tmp/sac/"
@@ -18,20 +51,24 @@ model_save_path_ppo = "./model/ppo/"
 
 ##############################################################################
 
-class CustomNetwork(nn.Module):
-    def __init__(self, input_shape, output_shape):
-        super(CustomNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_shape, 64)
-        self.custom_layer = nn.Linear(64, 32) # add your custom layer here
-        self.fc2 = nn.Linear(32, output_shape)
+
+class CustomFeaturesExtractor(BaseFeaturesExtractor):
+    def __init__(self, observation_space: gym.spaces.box.Box, output_shape):
+        super().__init__(observation_space, output_shape)
+
+        input_shape = observation_space.shape[0]
+        self.layers = nn.Sequential(
+            nn.Linear(input_shape, 64),
+            nn.ReLU(),
+            nn.Linear(64, output_shape),
+            nn.ReLU(),
+       )
 
     def forward(self, x):
-        x = nn.functional.relu(self.fc1(x))
-        x = nn.functional.relu(self.custom_layer(x))
-        x = self.fc2(x)
-        return x
+        return self.layers(x)
 
 ##############################################################################
+
 
 def main(args):
 
@@ -48,39 +85,51 @@ def main(args):
         model = PPO("MlpPolicy", env,
                     verbose=0,
                     tensorboard_log=tmp_path_ppo,
-                    batch_size=batch_size, 
+                    batch_size=batch_size,
                     n_steps=rollout_steps,
                     n_epochs=n_epochs)
 
+    elif (args.select == 'tuned_ppo'):
+        policy_kwargs = dict(
+            activation_fn=nn.ReLU,
+            features_extractor_class=CustomFeaturesExtractor,
+            features_extractor_kwargs=dict(
+                    output_shape=env.action_space.shape[0]
+                ),
+            net_arch=dict(pi=[32, 64, 32], vf=[32, 64, 32])  # actor and critic network arch
+        )
+        model = PPO("CnnPolicy", env,
+                    verbose=0,
+                    tensorboard_log=tmp_path_ppo,
+                    batch_size=batch_size,
+                    n_steps=rollout_steps,
+                    n_epochs=n_epochs,
+                    policy_kwargs=policy_kwargs)
+
     elif (args.select == 'sac'):
         model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)
-
     else:
         print("Please select a valid agent: ppo or sac")
         return
-        # TODO: Work-in-progress
-        # model = PPO(CustomNetwork(env.observation_space.shape[0], env.action_space.shape[0]), env,
-        #             verbose=0,
-        #             tensorboard_log=tmp_path_ppo,
-        #             batch_size=batch_size, 
-        #             n_steps=rollout_steps,
-        #             n_epochs=n_epochs)
 
     print(model.policy)
-   
-    # if args.load:
-    #     model.load(tmp_path+'ppo_agent.zip')
-    # model.load('model/ppo/best_model.zip')
+
+    # Load model
+    if args.load:
+        if ('ppo' in args.select):
+            model.load(tmp_path_ppo+'best_model.zip')
+        elif ('sac' in args.select):
+            model.load(tmp_path_sac+'best_model.zip')
 
     # model.set_logger(new_logger)
     eval_callback = EvalCallback(env, best_model_save_path=model_save_path_ppo,
-                                log_path=tmp_path_ppo, eval_freq=total_timesteps/n_epochs,
-                                deterministic=False, render=False)
+                                 log_path=tmp_path_ppo, eval_freq=total_timesteps/n_epochs,
+                                 deterministic=False, render=False)
 
-
-    model.learn(total_timesteps=total_timesteps,callback=eval_callback, progress_bar=True)
+    model.learn(total_timesteps=total_timesteps, callback=eval_callback, progress_bar=True)
 
 ##############################################################################
+
 
 if __name__ == '__main__':
     print("start running")

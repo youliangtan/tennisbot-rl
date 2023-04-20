@@ -132,37 +132,41 @@ class TennisbotEnv(gym.Env):
         # set reward depends on y-z distance of racket and ball
         # Compute reward as L2 change in distance
         delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-                            (ball_pose[1] - racket_pose[1]) ** 2 +
-                            (ball_pose[0] - racket_pose[0]) ** 2))
+                            (ball_pose[1] - racket_pose[1]) ** 2))
 
         # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
         if delta_dist < 0.5:
-            reward += 10
+            reward += 3
         elif delta_dist < 1.5:
-            reward += 5
-        else:
+            reward += 2
+        elif delta_dist < 3.0:
             reward += 1
         # self.prev_ball_racket_yz_dist = delta_dist
 
         # penalize the racket if it hits the court
         contact_racket_ground = p.getContactPoints(self.court.id, self.racket.id)
         if len(contact_racket_ground) > 0:
-            print("Racket hits the court!")
+            # print("Racket hits the court!")
             reward -= 10
 
-        if self.step_count > 1200:
-            self.done = True
-    
-       # get collision info
+       #gett collision info
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
             print(" BINGO!!!! Ball hits the racket!")
-            reward = reward + 100
+            reward = reward + 200
             # self.done = True
+
+        # penalize the racket if it is getting to high
+        if racket_pose[2] > 2.5:
+            reward -= 3
 
         # this is to prevent the agent making big moves
         # if self.prev_action is not None:
         #     reward -= np.linalg.norm(action - self.prev_action)/1000
+
+        # end the episode after 1200 steps
+        if self.step_count > 1200:
+            self.done = True
 
         # add current ball pose to the past ball trajectory
         self.ball_past_traj = self.ball_past_traj[3:] + ball_pose
@@ -171,6 +175,7 @@ class TennisbotEnv(gym.Env):
         # Get observation of the racket and ball state
         ob = np.array(racket_pose[:3] + self.ball_past_traj, dtype=np.float32)
 
+        # print("reward", reward)
         return ob, reward, self.done, dict()
 
     def seed(self, seed=None):
