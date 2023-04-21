@@ -47,10 +47,9 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 tmp_path_ppo = "./tmp/ppo/"
 tmp_path_sac = "./tmp/sac/"
 
-model_save_path_ppo = "./model/ppo/"
+model_save_path = "./model/ppo/"
 
 ##############################################################################
-
 
 class CustomFeaturesExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.box.Box, output_shape):
@@ -79,9 +78,28 @@ def main(args):
     n_epochs = int(total_timesteps / evaluation_frequency)
     batch_size = 1024
     rollout_steps = 1024
-    env = gym.make('Tennisbot-v0')
+    env = gym.make('Tennisbot-v0', use_gui=args.gui)
 
-    if (args.select == 'ppo'):
+    # model_path
+    if ('ppo' in args.select):
+        model_save_path = "./model/ppo/"
+    elif ('sac' in args.select):
+        model_save_path = "./model/sac/"
+    else:
+        print("Please select a valid agent: ppo or sac")
+        return
+
+    if args.load:
+        if ('ppo' in args.select):
+            print("loading previously trained PPO model")
+            model = PPO.load(model_save_path + "best_model.zip", env=env,
+                            tensorboard_log=tmp_path_ppo,
+                            batch_size=batch_size)
+        elif (args.select == 'sac'):
+            # TODO: load sac model
+            pass
+
+    elif (args.select == 'ppo'):
         model = PPO("MlpPolicy", env,
                     verbose=0,
                     tensorboard_log=tmp_path_ppo,
@@ -114,15 +132,7 @@ def main(args):
 
     print(model.policy)
 
-    # Load model
-    if args.load:
-        if ('ppo' in args.select):
-            model.load(tmp_path_ppo+'best_model.zip')
-        elif ('sac' in args.select):
-            model.load(tmp_path_sac+'best_model.zip')
-
-    # model.set_logger(new_logger)
-    eval_callback = EvalCallback(env, best_model_save_path=model_save_path_ppo,
+    eval_callback = EvalCallback(env, best_model_save_path=model_save_path,
                                  log_path=tmp_path_ppo, eval_freq=total_timesteps/n_epochs,
                                  deterministic=False, render=False)
 
@@ -135,7 +145,7 @@ if __name__ == '__main__':
     print("start running")
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', action='store_true', help="load model")
-    parser.add_argument('--render', action='store_true', help="render")
+    parser.add_argument('--gui', action='store_true', help="show pybullet gui")
     parser.add_argument('-s', '--select', type=str, default='ppo', help="select model: ppo or sac")
     args = parser.parse_args()
     main(args)

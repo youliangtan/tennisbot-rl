@@ -17,8 +17,6 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-GUI_MODE = False
-
 DELAY_MODE = False
 BALL_SHOOT_FRAMES = 500
 
@@ -36,7 +34,7 @@ class TennisbotEnv(gym.Env):
     """
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, use_gui=True):
         # Define action and observation space
         self.action_space = gym.spaces.box.Box(
             ## NOTE: This is the simplified action space in 3DOF x, y, z axis
@@ -61,7 +59,7 @@ class TennisbotEnv(gym.Env):
         self.np_random, _ = gym.utils.seeding.np_random()
         self.step_count = 0
 
-        if GUI_MODE:
+        if use_gui:
             self.client = p.connect(p.GUI)
         else:
             self.client = p.connect(p.DIRECT)
@@ -126,26 +124,26 @@ class TennisbotEnv(gym.Env):
                 print("second hit, x", ball_pose_ground[0])
                 if (ball_pose_ground[0] < 0.0): # hit the opposite court
                     print("Hit the ball to the opposite side of the court!")
-                    reward += 600
+                    reward += 200
                 self.done = True
 
-        # set reward depends on y-z distance of racket and ball
-        # Compute reward as L2 change in distance
-        # delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-        #                     (ball_pose[1] - racket_pose[1]) ** 2))
 
         # we will only reward the racket if it is in front of the ball
         x_ball_to_racket = ball_pose[0] - racket_pose[0]
         if (x_ball_to_racket < 1.0):
-            delta_dist = abs(ball_pose[1] - racket_pose[1])
+            # set reward depends on y-z distance of racket and ball
+            # Compute reward as L2 change in distance
+            delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
+                                (ball_pose[1] - racket_pose[1]) ** 2))
+            # delta_dist = abs(ball_pose[1] - racket_pose[1])
 
             # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
-            if delta_dist < 0.5:
-                reward += 3
-            elif delta_dist < 1.5:
+            if delta_dist < 0.3:
                 reward += 2
-            elif delta_dist < 3.0:
+            elif delta_dist < 1.0:
                 reward += 1
+            elif delta_dist > 2.0:
+                reward -= 1
         elif x_ball_to_racket < 2.0:
             # do nothing
             pass
@@ -158,18 +156,18 @@ class TennisbotEnv(gym.Env):
         contact_racket_ground = p.getContactPoints(self.court.id, self.racket.id)
         if len(contact_racket_ground) > 0:
             # print("Racket hits the court!")
-            reward -= 10
-
-       #gett collision info
-        contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
-        if len(contacts_ball_racket) > 0:
-            print("   BINGO!!!! Ball hits the racket!")
-            reward += 300
-            # self.done = True
+            reward -= 2
 
         # penalize the racket if it is getting to high
         if racket_pose[2] > 2.5:
-            reward -= 3
+            reward -= 1
+
+        # get collision info
+        contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
+        if len(contacts_ball_racket) > 0:
+            print("   BINGO!!!! Ball hits the racket!")
+            reward += 200
+            # self.done = True
 
         # this is to prevent the agent making big moves
         # if self.prev_action is not None:
@@ -218,8 +216,8 @@ class TennisbotEnv(gym.Env):
         ball_pose = self.ball.get_observation()
         racket_pose = self.racket.get_observation()
 
-        self.prev_ball_racket_yz_dist = 0
-        
+        self.prev_ball_racket_yz_dist = 0        
+       
         # for first init, we will assume all past ball locations are the same
         self.ball_past_traj = ball_pose*PAST_BALL_POSE_COUNT
         return np.array(racket_pose[0:3] + self.ball_past_traj, dtype=np.float32)

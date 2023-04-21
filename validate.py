@@ -4,24 +4,19 @@ import gym
 import torch
 import tennisbot
 import time
-from stable_baselines3 import PPO
-# from stable_baselines3 import SAC
+from stable_baselines3 import PPO, SAC
+
 import argparse
 
+##############################################################################
 
-# tmp_path = "./tmp/ppo/"
-
-
-def main():
-
-    # Use PPO agent
-    # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
-    # env = gym.make('Tennisbot-v0')
-    # model = PPO("MlpPolicy", env, verbose=0,tensorboard_log="./ppo_log/")
+def main(args):
     env = gym.make('Tennisbot-v0')
 
-    model = PPO.load("model/ppo/best_model.zip")
-    # model = SAC.load("sac_agent_80.zip")
+    if (args.select == 'ppo'):
+        model = PPO.load("model/ppo/best_model.zip")
+    elif (args.select == 'sac'):
+        model = SAC.load("model/sac/best_model.zip")
 
     print("------------- start running -------------")
     
@@ -29,14 +24,19 @@ def main():
     while True:
         action,_states = model.predict(ob)
         ob, _, done, _ = env.step(action)
-        # print("reward", reward)
+        # print("action", action)
         env.render("human")
         # time.sleep(1/240)
         if done:
             ob = env.reset()
             time.sleep(1)
 
-
+##############################################################################
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--select',
+                        type=str, default='ppo',
+                        help="select model: ppo or sac")
+    args = parser.parse_args()
+    main(args)
