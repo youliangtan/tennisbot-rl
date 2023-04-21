@@ -38,8 +38,10 @@ class TennisbotEnv(gym.Env):
         # Define action and observation space
         self.action_space = gym.spaces.box.Box(
             ## NOTE: This is the simplified action space in 3DOF x, y, z axis
-            low=np.array([-4.0, -4.0, -2.0], dtype=np.float32),
-            high=np.array([4.0, 4.0, 2.0], dtype=np.float32))
+            # low=np.array([-4.0, -4.0, -2.0], dtype=np.float32),
+            # high=np.array([4.0, 4.0, 2.0], dtype=np.float32))
+            low=np.array([-4.0, -4.0], dtype=np.float32),
+            high=np.array([4.0, 4.0], dtype=np.float32))
 
             ## NOTE: This is the original action space in 6DOF
             # low=np.array([5.0, -5.0, 0.0, -PI, -PI, -PI], dtype=np.float32),
@@ -90,7 +92,9 @@ class TennisbotEnv(gym.Env):
         
         # print("action: ", action)
        
-        action[2] += 4 # add a constant z-axis force to make it float
+        # action[2] += 4 # add a constant z-axis force to make it float
+        action = np.append(action, 4*9.81)
+        print("action: ", type(action), action)
         self.racket.apply_target_action(action)
 
         # Randomly shoot the ball out
@@ -133,9 +137,9 @@ class TennisbotEnv(gym.Env):
         if (x_ball_to_racket < 1.0):
             # set reward depends on y-z distance of racket and ball
             # Compute reward as L2 change in distance
-            delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-                                (ball_pose[1] - racket_pose[1]) ** 2))
-            # delta_dist = abs(ball_pose[1] - racket_pose[1])
+            # delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
+            #                     (ball_pose[1] - racket_pose[1]) ** 2))
+            delta_dist = abs(ball_pose[1] - racket_pose[1])
 
             # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
             if delta_dist < 0.3:
