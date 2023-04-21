@@ -40,9 +40,9 @@ class TennisbotEnv(gym.Env):
         # Define action and observation space
         self.action_space = gym.spaces.box.Box(
             ## NOTE: This is the simplified action space in 3DOF x, y, z axis
-            low=np.array([-3.0, -3.0, -1.0], dtype=np.float32),
-            high=np.array([3, 3.0, 1.0], dtype=np.float32))
-        
+            low=np.array([-4.0, -4.0, -2.0], dtype=np.float32),
+            high=np.array([4.0, 4.0, 2.0], dtype=np.float32))
+
             ## NOTE: This is the original action space in 6DOF
             # low=np.array([5.0, -5.0, 0.0, -PI, -PI, -PI], dtype=np.float32),
             # high=np.array([20.0, 5.0, 5.0, PI, PI, PI], dtype=np.float32))
@@ -51,7 +51,7 @@ class TennisbotEnv(gym.Env):
         self.observation_space = gym.spaces.box.Box(
             low=np.array([-20, -20, -5] + [-20, -20, 0]*PAST_BALL_POSE_COUNT,
                          dtype=np.float32),
-            high=np.array([20, 20, 5]  + [20, 20, 5]*PAST_BALL_POSE_COUNT,
+            high=np.array([20, 20, 5]  + [20, 20, 10]*PAST_BALL_POSE_COUNT,
                           dtype=np.float32)
             # low=np.array([-20, -20, -5, -PI, -PI, -PI, -4, -4, -4],
             #              dtype=np.float32),
@@ -113,8 +113,8 @@ class TennisbotEnv(gym.Env):
         ball_pose = self.ball.get_observation()
         racket_pose = self.racket.get_observation()
         
-        reward = 0       
-        
+        reward = 0
+
         # end the episode if the ball hits the court
         contacts_ball_ground = p.getContactPoints(self.court.id, self.ball.id)
         if len(contacts_ball_ground) > 0:
@@ -126,21 +126,32 @@ class TennisbotEnv(gym.Env):
                 print("second hit, x", ball_pose_ground[0])
                 if (ball_pose_ground[0] < 0.0): # hit the opposite court
                     print("Hit the ball to the opposite side of the court!")
-                    reward = reward + 200
+                    reward += 600
                 self.done = True
 
         # set reward depends on y-z distance of racket and ball
         # Compute reward as L2 change in distance
-        delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-                            (ball_pose[1] - racket_pose[1]) ** 2))
+        # delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
+        #                     (ball_pose[1] - racket_pose[1]) ** 2))
 
-        # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
-        if delta_dist < 0.5:
-            reward += 3
-        elif delta_dist < 1.5:
-            reward += 2
-        elif delta_dist < 3.0:
-            reward += 1
+        # we will only reward the racket if it is in front of the ball
+        x_ball_to_racket = ball_pose[0] - racket_pose[0]
+        if (x_ball_to_racket < 1.0):
+            delta_dist = abs(ball_pose[1] - racket_pose[1])
+
+            # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
+            if delta_dist < 0.5:
+                reward += 3
+            elif delta_dist < 1.5:
+                reward += 2
+            elif delta_dist < 3.0:
+                reward += 1
+        elif x_ball_to_racket < 2.0:
+            # do nothing
+            pass
+        else:
+            print("Ball passed the racket")
+            self.done = True
         # self.prev_ball_racket_yz_dist = delta_dist
 
         # penalize the racket if it hits the court
@@ -152,8 +163,8 @@ class TennisbotEnv(gym.Env):
        #gett collision info
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
-            print(" BINGO!!!! Ball hits the racket!")
-            reward = reward + 200
+            print("   BINGO!!!! Ball hits the racket!")
+            reward += 300
             # self.done = True
 
         # penalize the racket if it is getting to high
@@ -197,7 +208,7 @@ class TennisbotEnv(gym.Env):
         self.ball = Ball(self.client, pos=[-9,0,1])
         x, y, z = self.ball.get_observation()
         self.ball.random_pos(
-            range_x=[x-2, x+2], range_y=[y-2, y+2], range_z=[z, z+0.5])
+            range_x=[x-3, x+3], range_y=[y-2, y+2], range_z=[z, z+0.5])
 
         self.done = False
         self.step_count = 0

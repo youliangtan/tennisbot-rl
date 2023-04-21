@@ -98,7 +98,7 @@ def main(args):
                 ),
             net_arch=dict(pi=[32, 64, 32], vf=[32, 64, 32])  # actor and critic network arch
         )
-        model = PPO("CnnPolicy", env,
+        model = PPO("MlpPolicy", env,
                     verbose=0,
                     tensorboard_log=tmp_path_ppo,
                     batch_size=batch_size,
