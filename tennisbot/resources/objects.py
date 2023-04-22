@@ -57,6 +57,13 @@ class Ball:
         pos, _ = p.getBasePositionAndOrientation(self.id, self.client)
         return pos
 
+    def get_vel(self) -> List[float]:
+        """
+        Get the velocity of the ball in the simulation
+        """
+        vel, _ = p.getBaseVelocity(self.id, self.client)
+        return vel
+
     def apply_force(self, force: Tuple[float, float, float]):
         """
         Apply force to the ball in the simulation

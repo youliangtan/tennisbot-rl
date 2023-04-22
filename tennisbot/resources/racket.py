@@ -124,6 +124,13 @@ class Racket:
         # return pos + ori
         return pos
 
+    def get_vel(self) -> List[float]:
+        """
+        Get the velocity of the racket in the simulation
+        return velocity
+        """
+        vel, ang_vel = p.getBaseVelocity(self.id, self.client)
+        return vel
     
     def reset_pos(self, pos):
         """reset position for the racket

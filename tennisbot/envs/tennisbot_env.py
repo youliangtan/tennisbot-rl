@@ -49,9 +49,9 @@ class TennisbotEnv(gym.Env):
         
         # the observation space is the racket's state + ball's state (trajectory)
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-20, -20, -5] + [-20, -20, 0]*PAST_BALL_POSE_COUNT,
+            low=np.array([-20, -20, -5, -5, -5, -5] + [-20, -20, 0]*PAST_BALL_POSE_COUNT,
                          dtype=np.float32),
-            high=np.array([20, 20, 5]  + [20, 20, 10]*PAST_BALL_POSE_COUNT,
+            high=np.array([20, 20, 5, 5, 5, 5]  + [20, 20, 10]*PAST_BALL_POSE_COUNT,
                           dtype=np.float32)
             # low=np.array([-20, -20, -5, -PI, -PI, -PI, -4, -4, -4],
             #              dtype=np.float32),
@@ -94,7 +94,6 @@ class TennisbotEnv(gym.Env):
        
         # action[2] += 4 # add a constant z-axis force to make it float
         action = np.append(action, 4*9.81)
-        print("action: ", type(action), action)
         self.racket.apply_target_action(action)
 
         # Randomly shoot the ball out
@@ -143,16 +142,18 @@ class TennisbotEnv(gym.Env):
 
             # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
             if delta_dist < 0.3:
-                reward += 2
-            elif delta_dist < 1.0:
                 reward += 1
+            elif delta_dist < 1.0:
+                reward += 0
             elif delta_dist > 2.0:
                 reward -= 1
-        elif x_ball_to_racket < 2.0:
+        elif x_ball_to_racket < 1.0:
             # do nothing
             pass
         else:
-            print("Ball passed the racket")
+            delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
+                                (ball_pose[1] - racket_pose[1]) ** 2))
+            print("Ball passed the racket with y-z distance: ", delta_dist)
             self.done = True
         # self.prev_ball_racket_yz_dist = delta_dist
 
@@ -170,7 +171,7 @@ class TennisbotEnv(gym.Env):
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
             print("   BINGO!!!! Ball hits the racket!")
-            reward += 200
+            reward += 1
             # self.done = True
 
         # this is to prevent the agent making big moves
@@ -186,7 +187,8 @@ class TennisbotEnv(gym.Env):
         assert len(self.ball_past_traj) == PAST_BALL_POSE_COUNT*3
 
         # Get observation of the racket and ball state
-        ob = np.array(racket_pose[:3] + self.ball_past_traj, dtype=np.float32)
+        racket_vel = self.racket.get_vel()
+        ob = np.array(racket_pose[:3] + racket_vel + self.ball_past_traj, dtype=np.float32)
 
         # print("reward", reward)
         return ob, reward, self.done, dict()
@@ -224,7 +226,11 @@ class TennisbotEnv(gym.Env):
        
         # for first init, we will assume all past ball locations are the same
         self.ball_past_traj = ball_pose*PAST_BALL_POSE_COUNT
-        return np.array(racket_pose[0:3] + self.ball_past_traj, dtype=np.float32)
+        racket_vel = self.racket.get_vel()
+        # racket pose + racket vel + ball past traj
+        return np.array(
+            racket_pose[0:3] + racket_vel + self.ball_past_traj,
+            dtype=np.float32)
 
     def render(self, mode='human'):
         if self.rendered_img is None:

@@ -94,7 +94,8 @@ def main(args):
             print("loading previously trained PPO model")
             model = PPO.load(model_save_path + "best_model.zip", env=env,
                             tensorboard_log=tmp_path_ppo,
-                            batch_size=batch_size)
+                            batch_size=batch_size,
+                            learning_rate=1e-3,)
         elif (args.select == 'sac'):
             # TODO: load sac model
             pass
