@@ -20,7 +20,8 @@ class Racket:
                  client,
                  pos=[0, 0, 0], 
                  enable_orientation=True,
-                 time_step=1/240):
+                 time_step=1/240,
+                 scale = 1.0):
         """
         init the racket object with default position, orientation, 
         and time step for PID
@@ -30,7 +31,8 @@ class Racket:
         f_name = os.path.join(os.path.dirname(__file__), 'racket.urdf')
         self.id = p.loadURDF(fileName=f_name,
                               basePosition=pos,
-                              physicsClientId=client)
+                              physicsClientId=client,
+                              globalScaling=scale)
 
         # Define PID controller gains
         # NOTE: this is tested in playground.py

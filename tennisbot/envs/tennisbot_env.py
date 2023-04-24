@@ -18,11 +18,10 @@ from tennisbot.resources.objects import Court, Ball
 # Configurations
 
 DELAY_MODE = False
-BALL_SHOOT_FRAMES = 500
-
-BALL_FORCE = 5
+BALL_SHOOT_FRAMES = 100
+BALL_FORCE = 25
 ENABLE_ORIENTATION = False
-PAST_BALL_POSE_COUNT = 3
+PAST_BALL_POSE_COUNT = 2
 
 ##############################################################################
 
@@ -34,14 +33,14 @@ class TennisbotEnv(gym.Env):
     """
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, use_gui=True):
+    def __init__(self, use_gui=True, is_sparse_reward=False):
         # Define action and observation space
         self.action_space = gym.spaces.box.Box(
             ## NOTE: This is the simplified action space in 3DOF x, y, z axis
             # low=np.array([-4.0, -4.0, -2.0], dtype=np.float32),
             # high=np.array([4.0, 4.0, 2.0], dtype=np.float32))
-            low=np.array([-4.0, -4.0], dtype=np.float32),
-            high=np.array([4.0, 4.0], dtype=np.float32))
+            low=np.array([-10.0, -10.0], dtype=np.float32),
+            high=np.array([10.0, 10.0], dtype=np.float32))
 
             ## NOTE: This is the original action space in 6DOF
             # low=np.array([5.0, -5.0, 0.0, -PI, -PI, -PI], dtype=np.float32),
@@ -71,17 +70,20 @@ class TennisbotEnv(gym.Env):
         # p.setTimeStep(1/30, self.client) # 30 fps TODO
 
         # model in the world
+        self.is_sparse_reward = is_sparse_reward
         self.court = None
         self.racket = None
         self.ball = None
         self.done = False
-        self.prev_ball_racket_yz_dist = None
+        self.prev_ball_racket_yz_dist = 9
         self.rendered_img = None
         self.render_rot_matrix = None
         self.court_ball_contact_count = 0
         self.prev_action = None
         self.step_count = 0
         self.ball_past_traj = []
+        self.racket_scale = 1.0
+        print("init done")
 
         self.reset()
 
@@ -99,9 +101,9 @@ class TennisbotEnv(gym.Env):
         # Randomly shoot the ball out
         if self.step_count < BALL_SHOOT_FRAMES:
             self.ball.apply_force([
-                random.uniform(BALL_FORCE*0.9, BALL_FORCE*1.3),
+                random.uniform(BALL_FORCE*0.9, BALL_FORCE*1.5),
                 random.uniform(-BALL_FORCE, BALL_FORCE),
-                BALL_FORCE*2.2])
+                BALL_FORCE])
 
         p.stepSimulation()
         self.step_count += 1
@@ -116,86 +118,83 @@ class TennisbotEnv(gym.Env):
         
         reward = 0
 
-        # end the episode if the ball hits the court
-        contacts_ball_ground = p.getContactPoints(self.court.id, self.ball.id)
-        if len(contacts_ball_ground) > 0:
-            # print("Ball hits the court!")
-            self.court_ball_contact_count += 1
-                
-            if self.court_ball_contact_count >= 2: # arbitrary number
-                ball_pose_ground = self.ball.get_observation()
-                print("second hit, x", ball_pose_ground[0])
-                if (ball_pose_ground[0] < 0.0): # hit the opposite court
-                    print("Hit the ball to the opposite side of the court!")
-                    reward += 200
-                self.done = True
+        # Get observation of the racket and ball state
+        racket_vel = self.racket.get_vel()
+        # # add current ball pose to the past ball trajectory
+        self.ball_past_traj = self.ball_past_traj[3:] + ball_pose
+        assert len(self.ball_past_traj) == PAST_BALL_POSE_COUNT*3
+        ob = np.array(racket_pose[:3] + racket_vel + self.ball_past_traj, dtype=np.float32)
 
+        if self.step_count < BALL_SHOOT_FRAMES:
+            return ob, reward, False, dict()
 
-        # we will only reward the racket if it is in front of the ball
+        # # end the episode if the ball hits the court
+        # contacts_ball_ground = p.getContactPoints(self.court.id, self.ball.id)
+        # if len(contacts_ball_ground) > 0:
+        #     # print("Ball hits the court!")
+        #     self.court_ball_contact_count += 1
+
+        #     if self.court_ball_contact_count >= 2: # arbitrary number
+        #         ball_pose_ground = self.ball.get_observation()
+        #         print("second hit, x", ball_pose_ground[0])
+        #         if (ball_pose_ground[0] < 0.0): # hit the opposite court
+        #             print("Hit the ball to the opposite side of the court!")
+        #             reward += 200
+        #         self.done = True
+
+        # # penalize the racket if it hits the court
+        # contact_racket_ground = p.getContactPoints(self.court.id, self.racket.id)
+        # if len(contact_racket_ground) > 0:
+        #     # print("Racket hits the court!")
+        #     reward -= 2
+
+        # # penalize the racket if it is getting to high
+        # if racket_pose[2] > 2.5:
+        #     reward -= 1
+
+        # # get collision info
+        contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
+        if len(contacts_ball_racket) > 0:
+            print("   BINGO!!!! Ball hits the racket!")
+            reward += 2
+            # self.done = True
+
+        # # this is to prevent the agent making big moves
+        # # if self.prev_action is not None:
+        # #     reward -= np.linalg.norm(action - self.prev_action)/1000
+
+        # reward the racket to follow the ball
         x_ball_to_racket = ball_pose[0] - racket_pose[0]
         if (x_ball_to_racket < 1.0):
-            # set reward depends on y-z distance of racket and ball
-            # Compute reward as L2 change in distance
-            # delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-            #                     (ball_pose[1] - racket_pose[1]) ** 2))
-            delta_dist = abs(ball_pose[1] - racket_pose[1])
-
-            # reward = max(self.prev_ball_racket_yz_dist - delta_dist, 0)
-            if delta_dist < 0.3:
-                reward += 1
-            elif delta_dist < 1.0:
-                reward += 0
-            elif delta_dist > 2.0:
-                reward -= 1
-        elif x_ball_to_racket < 1.0:
-            # do nothing
+            dist = (racket_pose[1] - ball_pose[1])**2 + \
+                (racket_pose[2] - ball_pose[2])**2
+            # print(self.prev_ball_racket_yz_dist - dist)
+            reward += max(self.prev_ball_racket_yz_dist - dist, 0)
+            self.prev_ball_racket_yz_dist = dist
             pass
         else:
             delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
                                 (ball_pose[1] - racket_pose[1]) ** 2))
-            print("Ball passed the racket with y-z distance: ", delta_dist)
-            self.done = True
-        # self.prev_ball_racket_yz_dist = delta_dist
-
-        # penalize the racket if it hits the court
-        contact_racket_ground = p.getContactPoints(self.court.id, self.racket.id)
-        if len(contact_racket_ground) > 0:
-            # print("Racket hits the court!")
-            reward -= 2
-
-        # penalize the racket if it is getting to high
-        if racket_pose[2] > 2.5:
-            reward -= 1
-
-        # get collision info
-        contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
-        if len(contacts_ball_racket) > 0:
-            print("   BINGO!!!! Ball hits the racket!")
-            reward += 1
-            # self.done = True
-
-        # this is to prevent the agent making big moves
-        # if self.prev_action is not None:
-        #     reward -= np.linalg.norm(action - self.prev_action)/1000
-
-        # end the episode after 1200 steps
-        if self.step_count > 1200:
+            print(f"Ball passed the racket step [{self.step_count}]"
+                  f"with y-z distance: {delta_dist}")
             self.done = True
 
-        # add current ball pose to the past ball trajectory
-        self.ball_past_traj = self.ball_past_traj[3:] + ball_pose
-        assert len(self.ball_past_traj) == PAST_BALL_POSE_COUNT*3
-
-        # Get observation of the racket and ball state
-        racket_vel = self.racket.get_vel()
-        ob = np.array(racket_pose[:3] + racket_vel + self.ball_past_traj, dtype=np.float32)
+        # # end the episode after 1100 steps
+        if self.step_count > 1100:
+            print("Episode ends after 1100 steps!, racket pose: ", racket_pose)
+            self.done = True
 
         # print("reward", reward)
+        # reward = 1
         return ob, reward, self.done, dict()
 
     def seed(self, seed=None):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
+
+    def set_racket_scale(self, scale):
+        self.racket_scale = scale
+        print("Set racket scale to: ", scale)
 
     def reset(self):
         # print("Reset environment!")
@@ -207,7 +206,14 @@ class TennisbotEnv(gym.Env):
         self.court = Court(self.client)
 
         # TODO: Randomly set the location of the racket and ball
-        self.racket = Racket(self.client, [9.5, 0, 0.2], ENABLE_ORIENTATION)
+        _rand_x = random.uniform(7.5, 12.5)
+        _rand_y = random.uniform(-5, 5)
+        _rand_z = random.uniform(0.2, 0.21)
+        self.racket = Racket(self.client,
+                            #  [9.5, 0, 0.2],
+                            [_rand_x, _rand_y, _rand_z],
+                             ENABLE_ORIENTATION,
+                             scale=self.racket_scale)
 
         self.ball = Ball(self.client, pos=[-9,0,1])
         x, y, z = self.ball.get_observation()
@@ -222,7 +228,7 @@ class TennisbotEnv(gym.Env):
         ball_pose = self.ball.get_observation()
         racket_pose = self.racket.get_observation()
 
-        self.prev_ball_racket_yz_dist = 0        
+        self.prev_ball_racket_yz_dist = 0
        
         # for first init, we will assume all past ball locations are the same
         self.ball_past_traj = ball_pose*PAST_BALL_POSE_COUNT

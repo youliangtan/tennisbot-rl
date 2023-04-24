@@ -41,7 +41,7 @@ from stable_baselines3 import PPO
 from stable_baselines3 import SAC
 import argparse
 from stable_baselines3.common.logger import configure
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, BaseCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 tmp_path_ppo = "./tmp/ppo/"
@@ -76,8 +76,8 @@ def main(args):
     total_timesteps = 10e5
     evaluation_frequency = 500
     n_epochs = int(total_timesteps / evaluation_frequency)
-    batch_size = 1024
-    rollout_steps = 1024
+    batch_size = 1100
+    rollout_steps = 1100
     env = gym.make('Tennisbot-v0', use_gui=args.gui)
 
     # model_path
@@ -105,8 +105,9 @@ def main(args):
                     verbose=0,
                     tensorboard_log=tmp_path_ppo,
                     batch_size=batch_size,
-                    n_steps=rollout_steps,
-                    n_epochs=n_epochs)
+                    ent_coef=0.01,
+                    # gamma=0.95,
+                    n_steps=rollout_steps)
 
     elif (args.select == 'tuned_ppo'):
         policy_kwargs = dict(
@@ -133,11 +134,55 @@ def main(args):
 
     print(model.policy)
 
+    # Create callbacks
     eval_callback = EvalCallback(env, best_model_save_path=model_save_path,
-                                 log_path=tmp_path_ppo, eval_freq=total_timesteps/n_epochs,
+                                 log_path=tmp_path_ppo,
+                                 eval_freq=1000,
                                  deterministic=False, render=False)
+    checkpoint_cb = CheckpointCallback(save_freq=10000,
+                                       save_path=model_save_path,
+                                       name_prefix='rl_model')
 
-    model.learn(total_timesteps=total_timesteps, callback=eval_callback, progress_bar=True)
+    callback_list = [eval_callback, checkpoint_cb]
+    if args.curri:
+        progress_cb = ProgressCallback(env, total_timesteps)
+        callback_list.append(progress_cb)
+
+    model.learn(total_timesteps=total_timesteps,
+                callback=callback_list, progress_bar=True)
+
+# This feature will do change the size of the racket based on the progress
+class ProgressCallback(BaseCallback):
+    def __init__(self, env, total_timesteps):
+        super(ProgressCallback, self).__init__()
+        self.env = env
+        self.total_timesteps = total_timesteps
+
+    def _on_step(self) -> bool:
+        return True
+
+    def _on_rollout_start(self):
+        # get current progress in percent
+        progress = int(self.num_timesteps / self.total_timesteps * 100)
+        # print("CB! progress: {}%".format(progress))
+
+        # change the size of the racket
+        if (progress < 3):
+            self.env.set_racket_scale(3)
+        elif (progress < 5):
+            self.env.set_racket_scale(2.6)
+        elif (progress < 10):
+            self.env.set_racket_scale(2.3)
+        elif (progress < 15):
+            self.env.set_racket_scale(2.1)
+        elif (progress < 25):
+            self.env.set_racket_scale(1.9)
+        elif (progress < 45):
+            self.env.set_racket_scale(1.7)
+        elif (progress < 70):
+            self.env.set_racket_scale(1.3)
+        else:
+            self.env.set_racket_scale(1)
 
 ##############################################################################
 
@@ -145,8 +190,13 @@ def main(args):
 if __name__ == '__main__':
     print("start running")
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load', action='store_true', help="load model")
-    parser.add_argument('--gui', action='store_true', help="show pybullet gui")
-    parser.add_argument('-s', '--select', type=str, default='ppo', help="select model: ppo or sac")
+    parser.add_argument('--load', action='store_true',
+                        help="load model")
+    parser.add_argument('--gui', action='store_true',
+                        help="show pybullet gui")
+    parser.add_argument('--curri', action='store_true',
+                        help="curriculum learning size change of racket")
+    parser.add_argument('-s', '--select', type=str, default='ppo',
+                        help="select model: ppo or sac or tuned_ppo")
     args = parser.parse_args()
     main(args)

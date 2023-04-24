@@ -13,6 +13,11 @@ import argparse
 def main(args):
     env = gym.make('Tennisbot-v0')
 
+    if args.model_file:
+        if args.select == 'ppo':
+            model = PPO.load(args.model_file)
+        elif args.select == 'sac':
+            model = SAC.load(args.model_file)
     if (args.select == 'ppo'):
         model = PPO.load("model/ppo/best_model.zip")
     elif (args.select == 'sac'):
@@ -25,7 +30,7 @@ def main(args):
         action,_states = model.predict(ob)
         ob, _, done, _ = env.step(action)
         # print("action", action)
-        env.render("human")
+        env.render(mode="human")
         # time.sleep(1/240)
         if done:
             ob = env.reset()
@@ -38,5 +43,9 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--select',
                         type=str, default='ppo',
                         help="select model: ppo or sac")
+    parser.add_argument('-m', '--model_file',
+                        type=str, default='',
+                        help="model file name")
+             
     args = parser.parse_args()
     main(args)
