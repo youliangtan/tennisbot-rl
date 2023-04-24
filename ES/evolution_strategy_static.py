@@ -10,26 +10,30 @@ from os import mkdir
 from tennisbot.ES.fitness_functions import fitness_static
 
 repeat_j =10
-
+POPULATION_SIZE=200
 def compute_ranks(x):
     """
     Returns rank as a vector of len(x) with integers from 0 to len(x)
     """
     # assert x.ndim == 1
     print("here we are computing the rank of rewards", x.shape)
-    _,pop_size = x.shape
-    diff = x[0] - x[1]
+    pop_size_pairs = x.shape # pop_size is one half of the population size
+    diff = np.zeros(shape= int(POPULATION_SIZE/2))
+    for i in range(int(POPULATION_SIZE /2) - 1):
+        diff[i] = x[i]-x[i+1]
 
-    ranks = np.empty(pop_size, dtype=int)
-    ranks[diff.argsort()] = np.arange(pop_size)
+    ranks = np.empty(int(POPULATION_SIZE/2), dtype=int)
+    ranks[diff.argsort()] = np.arange(int(POPULATION_SIZE/2))
     return ranks
 
 def compute_centered_ranks(x):
   """
   Maps x to [-0.5, 0.5] and returns the rank
   """
-  y = compute_ranks(x.ravel()).reshape(x.shape).astype(np.float32)
-  y /= (x.size - 1)
+  y = compute_ranks(x).astype(np.float32)
+  pop_size_pairs = len(x)
+
+  y /= (pop_size_pairs - 1)
   y -= .5
   return y
 
@@ -44,7 +48,7 @@ def worker_process(arg):
 
 
 class EvolutionStrategyStatic(object):
-    def __init__(self, weights, environment, population_size=500, sigma=0.1, learning_rate=0.2, decay=0.995, num_threads=-1, K=250):
+    def __init__(self, weights, environment, population_size=200, sigma=0.1, learning_rate=0.2, decay=0.995, num_threads=-1, K=100):
         
         self.weights = weights
         self.environment = environment
@@ -73,6 +77,7 @@ class EvolutionStrategyStatic(object):
         return self.weights
 
     def _get_population(self):
+        print("getting pop")
         population = []
         for i in range( int(self.POPULATION_SIZE/2) ):
             x = []
@@ -140,10 +145,11 @@ class EvolutionStrategyStatic(object):
         rewards = (rewards - rewards.mean()) / std  # Normalize rewards
 
         for index, w in enumerate(self.weights):
-            layer_population = np.array([p[index] for p in population])   # Array of all weights[i] for all the networks in the population
+            k =int(self.POPULATION_SIZE/2)
+            layer_population = np.array([p[index] for p in population[0:k]])   # Array of all weights[i] for all the networks in the population
             
             self.update_factor = self.learning_rate / (self.POPULATION_SIZE * self.SIGMA)    
-            self.weights[index] = w + self.update_factor * np.dot( (layer_population.T)[0:self.K], rewards[0:self.K]).T
+            self.weights[index] = w + self.update_factor * np.dot( (layer_population.T), rewards).T
 
         if self.learning_rate > 0.001:
             self.learning_rate *= self.decay
