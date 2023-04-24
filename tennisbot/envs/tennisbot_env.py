@@ -92,8 +92,8 @@ class TennisbotEnv(gym.Env):
         # Shoot the ball
         if self.step_count < BALL_SHOOT_FRAMES:
             self.ball.apply_force([
-                random.uniform(BALL_FORCE*0.9, BALL_FORCE*1.3),
-                random.uniform(-BALL_FORCE, BALL_FORCE),
+                random.uniform(BALL_FORCE*0.95, BALL_FORCE*1.05),
+                random.uniform(-0.1, 0.1),
                 BALL_FORCE*2.2])
 
         p.stepSimulation()
@@ -135,8 +135,8 @@ class TennisbotEnv(gym.Env):
             self.prev_ball_racket_yz_dist = yz_dist
             # print("reward", reward)
         
-        # if self.step_count > 1200:
-        #     self.done = True
+        if self.step_count > 1200:
+            self.done = True
 
         # for i_action in range(3):
         #     reward = reward - 5e-5*action[i_action]**2
