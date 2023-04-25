@@ -1,37 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-Default PPO network
-ActorCriticPolicy(
-  (features_extractor): FlattenExtractor(
-    (flatten): Flatten(start_dim=1, end_dim=-1)
-  )
-  (pi_features_extractor): FlattenExtractor(
-    (flatten): Flatten(start_dim=1, end_dim=-1)
-  )
-  (vf_features_extractor): FlattenExtractor(
-    (flatten): Flatten(start_dim=1, end_dim=-1)
-  )
-  (mlp_extractor): MlpExtractor(
-    (shared_net): Sequential()
-    (policy_net): Sequential(
-      (0): Linear(in_features=12, out_features=64, bias=True)
-      (1): Tanh()
-      (2): Linear(in_features=64, out_features=64, bias=True)
-      (3): Tanh()
-    )
-    (value_net): Sequential(
-      (0): Linear(in_features=12, out_features=64, bias=True)
-      (1): Tanh()
-      (2): Linear(in_features=64, out_features=64, bias=True)
-      (3): Tanh()
-    )
-  )
-  (action_net): Linear(in_features=64, out_features=3, bias=True)
-  (value_net): Linear(in_features=64, out_features=1, bias=True)
-)
-"""
-
 import gym
 import torch.nn as nn
 from agent import TRPOAgent
@@ -41,13 +9,11 @@ from stable_baselines3 import PPO
 from stable_baselines3 import SAC
 import argparse
 from stable_baselines3.common.logger import configure
-from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, BaseCallback
+from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-tmp_path_ppo = "./tmp/ppo/"
-tmp_path_sac = "./tmp/sac/"
-
-model_save_path = "./model/ppo/"
+tmp_path_ppo = "./tmp/swing_ppo/"
+tmp_path_sac = "./tmp/swing_sac/"
 
 ##############################################################################
 
@@ -78,13 +44,13 @@ def main(args):
     n_epochs = int(total_timesteps / evaluation_frequency)
     batch_size = 1100
     rollout_steps = 1100
-    env = gym.make('Tennisbot-v0', use_gui=args.gui)
+    env = gym.make('SwingRacket-v0', use_gui=args.gui)
 
     # model_path
     if ('ppo' in args.select):
-        model_save_path = "./model/ppo/"
+        model_save_path = "./model/ppo_swing/"
     elif ('sac' in args.select):
-        model_save_path = "./model/sac/"
+        model_save_path = "./model/sac_swing/"
     else:
         print("Please select a valid agent: ppo or sac")
         return
@@ -109,23 +75,6 @@ def main(args):
                     # gamma=0.95,
                     n_steps=rollout_steps)
 
-    elif (args.select == 'tuned_ppo'):
-        policy_kwargs = dict(
-            activation_fn=nn.ReLU,
-            features_extractor_class=CustomFeaturesExtractor,
-            features_extractor_kwargs=dict(
-                    output_shape=env.action_space.shape[0]
-                ),
-            net_arch=dict(pi=[32, 64, 32], vf=[32, 64, 32])  # actor and critic network arch
-        )
-        model = PPO("MlpPolicy", env,
-                    verbose=0,
-                    tensorboard_log=tmp_path_ppo,
-                    batch_size=batch_size,
-                    n_steps=rollout_steps,
-                    n_epochs=n_epochs,
-                    policy_kwargs=policy_kwargs)
-
     elif (args.select == 'sac'):
         model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)
     else:
@@ -144,36 +93,10 @@ def main(args):
                                        name_prefix='rl_model')
 
     callback_list = [eval_callback, checkpoint_cb]
-    if args.curri:
-        progress_cb = ProgressCallback(env, total_timesteps)
-        callback_list.append(progress_cb)
 
     model.learn(total_timesteps=total_timesteps,
                 callback=callback_list, progress_bar=True)
 
-# This feature will do change the size of the racket based on the progress
-class ProgressCallback(BaseCallback):
-    def __init__(self, env, total_timesteps):
-        super(ProgressCallback, self).__init__()
-        self.env = env
-        self.total_timesteps = total_timesteps
-
-    def _on_step(self) -> bool:
-        return True
-
-    def _on_rollout_start(self):
-        # get current progress in percent
-        progress = int(self.num_timesteps / self.total_timesteps * 100)
-        # print("CB! progress: {}%".format(progress))
-
-        # change the size of the racket according to the progress
-        percent_thresh =  [3, 5,   10,  15,  25,  45,  70, 101]
-        scale_thresh =    [3, 2.6, 2.3, 2.1, 1.9, 1.7, 1.3, 1]
-        assert(len(percent_thresh) == len(scale_thresh))
-        for i in range(len(percent_thresh)):
-          if (progress < percent_thresh[i]):
-            self.env.set_racket_scale(scale_thresh[i])
-            break
 
 ##############################################################################
 

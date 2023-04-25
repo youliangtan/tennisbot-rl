@@ -79,24 +79,22 @@ class Racket:
                 self.ori_controller[i].setpoint = 0
                 
     
-    def apply_target_action(self, action):
+    def apply_target_action(self, forces, torques=None):
         """
-        Apply directly target force and torque.
+        Apply directly target force
         """
         pose = self.get_observation()
         p.applyExternalForce(
-                self.id, -1, action[:3], pose[:3], p.WORLD_FRAME)
-            
-        # p.applyExternalTorque(self.id, -1, action[3:6], p.WORLD_FRAME)
+                self.id, -1, forces[:3], pose[:3], p.WORLD_FRAME)
+        if torques is not None:
+            p.applyExternalTorque(self.id, -1, torques[:3], p.WORLD_FRAME)
 
 
     def apply_pid_force_torque(self):
         """
         Applying force and torque control to the racket
-        """
-        
+        """       
         # for i_step in range(2):
-            
         pose = self.get_observation()
 
         # Control the racket position, default z-force to compensate gravity

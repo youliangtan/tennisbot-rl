@@ -41,5 +41,11 @@ Run validate
 python3 validate.py
 ```
 
+## Run swing racket demo
+
+```bash
+python3 train_swing.py
+```
+
 ## Notes
  - Revert back to `gym` instead of `gymnasium` since `stable-baselines` does not support `gymnasium` yet: https://github.com/DLR-RM/stable-baselines3/pull/780
