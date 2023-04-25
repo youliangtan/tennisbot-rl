@@ -155,8 +155,9 @@ class EvolutionStrategyStatic(object):
 
 
             rewards_repeated  = pool.map(worker_process, worker_args)
-            print("here we have reward in total", len(rewards_repeated))
-            rewards = np.array(rewards_repeated).reshape(newshape=(repeat_j,-1))
+            # print("here we have reward in total threads", len(rewards_repeated))
+            rewards = np.array(rewards_repeated)
+            rewards = np.reshape(rewards, newshape=(repeat_j,-1) )
             rewards = np.average(rewards,axis=1)
 
             
