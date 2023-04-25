@@ -11,7 +11,7 @@ from tennisbot.ES.policies import MLP, CNN,GatedCNN
 
 HISTORY_LEN = 8
 
-def fitness_static(evolved_parameters: np.array, environment : str, render = False) -> float:
+def fitness_static(evolved_parameters: np.array, environment : str, normalizer, render = False) -> float:
     """
     Evaluate an agent 'evolved_parameters' in an environment 'environment' during a lifetime.
     Returns the episodic fitness of the agent.
@@ -62,9 +62,16 @@ def fitness_static(evolved_parameters: np.array, environment : str, render = Fal
         nn.utils.vector_to_parameters( torch.tensor (evolved_parameters, dtype=torch.float32 ),  p.parameters() )
             
         observation = env.reset()
-        observation = np.reshape(observation, newshape=(1,-1))
+        # add it to the history of observations and normalize them
 
-        history_obs = np.repeat(observation, repeats=8, axis=0)  # make sure to use a history of 8 time step
+        normalizer.observe(observation)
+        normed_observation = normalizer.normalize(observation)
+
+        normed_observation = np.reshape(normed_observation, newshape=(1,-1))
+
+
+
+        history_normed_obs = np.repeat(normed_observation, repeats=8, axis=0)  # make sure to use a history of 8 time step
 
 
         # if pixel_env: observation = np.swapaxes(observation,0,2) #(3, 84, 84)
@@ -89,7 +96,8 @@ def fitness_static(evolved_parameters: np.array, environment : str, render = Fal
             # print("time",t)
             # print("here we are inputting the ob history at", (history_obs[-8:].T).shape, history_obs)
 
-            o3 = p(history_obs[-8:].T)
+
+            o3 = p((history_normed_obs[-8:].T))
            # print( 'the returned action is ', o3)
 
             # Bounding the action space
@@ -112,9 +120,10 @@ def fitness_static(evolved_parameters: np.array, environment : str, render = Fal
             # print("the action is now", action)
             observation, reward, done, info = env.step(action)
 
-            observation = np.reshape(observation, newshape=(1, -1))
-
-            history_obs = np.append(history_obs, observation, axis=0)
+            normalizer.observe(observation)
+            normed_observation = normalizer.normalize(observation)
+            normed_observation = np.reshape(normed_observation, newshape=(1, -1))
+            history_normed_obs = np.append(history_normed_obs, normed_observation, axis=0)
 
             # if environment == 'AntBulletEnv-v0': reward = env.unwrapped.rewards[1] # Distance walked
             #
