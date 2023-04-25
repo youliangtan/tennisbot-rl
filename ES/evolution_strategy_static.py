@@ -44,12 +44,14 @@ class Normalizer():
 
 
 
-def compute_ranks(positive_rewards, negative_rewards, nb_best_directions = 100):
+def compute_ranks(positive_rewards, negative_rewards, nb_best_directions):
     """
     Returns rank as a vector of len(x) with integers from 0 to len(x)
     """
     # assert x.ndim == 1
+    print("there are rewards", len(positive_rewards))
     scores = {k: (r_pos - r_neg) for k, (r_pos, r_neg) in enumerate(zip(positive_rewards, negative_rewards))}
+    print(scores,'sssssssssssssss')
     order = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)[:nb_best_directions]
 
 
@@ -84,7 +86,7 @@ def worker_process(arg):
 
 
 class EvolutionStrategyStatic(object):
-    def __init__(self, weights, environment, population_size=200, sigma=0.1, learning_rate=0.2, decay=0.995, num_threads=-1, K=70):
+    def __init__(self, weights, environment, population_size=20, sigma=0.1, learning_rate=0.2, decay=0.995, num_threads=-1, K=66):
         
         self.weights = weights
         self.environment = environment
@@ -136,7 +138,7 @@ class EvolutionStrategyStatic(object):
         # population_negative =  -1 * population_positive
         # population = np.append(population_positive,population_negative)
 
-        print("we are using these populations", population.shape)
+        # print("we are using these populations", population.shape)
         
         # Multi-core
         if pool is not None:
@@ -157,10 +159,11 @@ class EvolutionStrategyStatic(object):
             rewards_repeated  = pool.map(worker_process, worker_args)
             # print("here we have reward in total threads", len(rewards_repeated))
             rewards = np.array(rewards_repeated)
-            rewards = np.reshape(rewards, newshape=(repeat_j,-1) )
+
+            rewards = np.reshape(rewards, newshape=(self.POPULATION_SIZE*2,repeat_j) )
+
             rewards = np.average(rewards,axis=1)
 
-            
             # worker_args = []
             # jittered = self.SIGMA * population
             # for i in range(len(population)):
@@ -186,7 +189,7 @@ class EvolutionStrategyStatic(object):
         positive_rewards =  rewards[::2]
         negative_rewards = rewards[1::2]
 
-        # positive_pertubation = population[::2]
+        positive_pertubation = population[::2]
         # negative_pertubation = population[::2]
 
         order = compute_ranks(positive_rewards, negative_rewards, self.K)   # in population, only postiive
@@ -198,20 +201,27 @@ class EvolutionStrategyStatic(object):
         # if std == 0:
         #     raise ValueError('Variance should not be zero')
 
-        rollouts = [(positive_rewards[k], negative_rewards[k], population[2*k]) for k in order]
+        # rollouts = [(positive_rewards[k], negative_rewards[k], population[2*k]) for k in order]
 
-        elite_rewards = np.array(rollouts[0] + rollouts[1])
+        elite_positive_rewards = np.array( [(positive_rewards[k]) for k in order])
+
+        elite_negative_rewards = np.array([(negative_rewards[k]) for k in order])
+        elite_rewards = np.append(elite_negative_rewards,elite_positive_rewards)
+
+        reward_diff = elite_positive_rewards -elite_negative_rewards
 
         std = elite_rewards.std()
 
 
 
-        reward_diff = np.array(rollouts[0]) - np.array( rollouts[1])
+        # reward_diff = np.array(rollouts[0]) - np.array( rollouts[1])
 
 
         # step = np.dot( np.array(rollouts[0] - rollouts[1]) , np.array(rollouts[-1]) )
 
-        elite_population =  [ population[2*k] for k in order]
+        print("confused again",order)
+        elite_population =  [ positive_pertubation[k] for k in order]
+
 
 
         # rewards = (rewards - rewards.mean()) / std  # Normalize rewards
@@ -221,6 +231,9 @@ class EvolutionStrategyStatic(object):
             
             self.update_factor = self.learning_rate / (std * self.K)
             # K * layer_para_size , K *1
+            print("size here", layer_population.shape, np.reshape(reward_diff,(-1,1)).shape, w.shape)
+            print("confused", w)
+
             self.weights[index] = w + self.update_factor * np.matmul( (layer_population.T), np.reshape(reward_diff,(-1,1)))
 
         if self.learning_rate > 0.001:
