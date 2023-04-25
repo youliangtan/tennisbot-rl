@@ -51,8 +51,8 @@ class SwingRacketEnv(gym.Env):
         self.racket = None
         self.ball = None
         self.done = False
-        self.spawn_pos = [0, 0, 0.5] # Random
         self.previous_ball_goal_dist = None
+        self.initial_dist_to_goal = None
         self.court_ball_contact_count = 0
         self.prev_action = None
         self.step_count = 0
@@ -88,13 +88,13 @@ class SwingRacketEnv(gym.Env):
         if self.step_count < 100:
             contact_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
             if len(contact_ball_racket) > 0:
-                reward += 1
+                reward += 2
                 print("Contact ball racket at step: ", self.step_count)
 
         # calc reward based on ball's distance to goal and traveled distance
         dist_ball_to_origin = np.linalg.norm(
             np.array(self.ball.get_observation()[:2]) - np.array(self.spawn_pos[:2]))
-        last_reward = dist_ball_to_origin - dist_ball_to_goal
+        last_reward = dist_ball_to_origin - (dist_ball_to_goal - self.initial_dist_to_goal)
 
         # check if ball is in contact with court
         contact_ball_court = p.getContactPoints(self.court.id, self.ball.id)
@@ -148,6 +148,8 @@ class SwingRacketEnv(gym.Env):
 
         # Set the goal to a random target
         self.goal = (np.random.uniform(-3, -12), np.random.uniform(-5, 5))
+        self.initial_dist_to_goal = np.linalg.norm(
+            np.array(self.ball.get_observation()[:2]) - np.array(self.goal))
         self.done = False
 
         # Visual element of the goal
