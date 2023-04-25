@@ -85,7 +85,7 @@ class SwingRacketEnv(gym.Env):
         #     self.previous_ball_goal_dist = dist_ball_to_goal
 
         # check if ball is in contact with the racket at first few steps
-        if self.step_count < 50:
+        if self.step_count < 100:
             contact_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
             if len(contact_ball_racket) > 0:
                 reward += 1
