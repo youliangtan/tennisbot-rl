@@ -115,7 +115,7 @@ class GatedCNN(nn.Module):
         #    Output: (bs, Cout, Hout, Wout)
 
 
-        x = torch.from_numpy(x)
+        x = torch.from_numpy(x).float()
         A = self.conv_0(x)      # (bs, Cout, seq_len, 1)
         # A += self.b_0.repeat(1, 1, seq_len, 1)
         B = self.conv_gate_0(x) # (bs, Cout, seq_len, 1)
