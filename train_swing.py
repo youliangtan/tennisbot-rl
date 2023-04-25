@@ -39,7 +39,7 @@ def main(args):
 
     # Use PPO agent
     # https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
-    total_timesteps = 10e5
+    total_timesteps = 20e5
     evaluation_frequency = 500
     n_epochs = int(total_timesteps / evaluation_frequency)
     batch_size = 1100
@@ -67,13 +67,18 @@ def main(args):
             pass
 
     elif (args.select == 'ppo'):
+        policy_kwargs = dict(
+                net_arch=dict(pi=[32, 64, 32], vf=[32, 64, 32])  # actor and critic network arch
+                )
         model = PPO("MlpPolicy", env,
                     verbose=0,
                     tensorboard_log=tmp_path_ppo,
                     batch_size=batch_size,
-                    ent_coef=0.01,
+                    ent_coef=0.002,
                     # gamma=0.95,
-                    n_steps=rollout_steps)
+                    n_steps=rollout_steps,
+                    policy_kwargs=policy_kwargs
+                )
 
     elif (args.select == 'sac'):
         model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)

@@ -27,8 +27,8 @@ class SwingRacketEnv(gym.Env):
     def __init__(self, use_gui=True):
         # Define action and observation space in 6DOF force and torque
         self.action_space = gym.spaces.box.Box(
-            low=np.array([-2, -1.50, -1.500, -5, -5, -5], dtype=np.float32),
-            high=np.array([2, 1.50, 1.500, 5, 5, 5], dtype=np.float32))
+            low=np.array([-2, -2.0, -2.0, -5, -5, -5], dtype=np.float32),
+            high=np.array([2, 2.0, 2.0, 5, 5, 5], dtype=np.float32))
 
         # the observation space is the racket's state + target goal
         self.observation_space = gym.spaces.box.Box(
