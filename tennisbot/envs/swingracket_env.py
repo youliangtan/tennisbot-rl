@@ -17,7 +17,7 @@ from tennisbot.resources.objects import Court, Ball, Goal
 ##############################################################################
 # Configurations
 
-DELAY_MODE = True
+DELAY_MODE = False
 
 ##############################################################################
 
@@ -27,14 +27,14 @@ class SwingRacketEnv(gym.Env):
     def __init__(self, use_gui=True):
         # Define action and observation space in 6DOF force and torque
         self.action_space = gym.spaces.box.Box(
-            low=np.array([-1.500, -1.50, -1.500, -5, -5, -5], dtype=np.float32),
-            high=np.array([1.500, 1.50, 1.500, 5, 5, 5], dtype=np.float32))
+            low=np.array([-2, -1.50, -1.500, -5, -5, -5], dtype=np.float32),
+            high=np.array([2, 1.50, 1.500, 5, 5, 5], dtype=np.float32))
 
         # the observation space is the racket's state + target goal
         self.observation_space = gym.spaces.box.Box(
-                low=np.array([-20, -10, -15, -5],
+                low=np.array([-20, -10, -20, -10, -15, -5],
                             dtype=np.float32),
-                high=np.array([20, 10, 0, 5],
+                high=np.array([20, 10, 20, 10, 0, 5],
                             dtype=np.float32)
             )
         self.np_random, _ = gym.utils.seeding.np_random()
@@ -60,7 +60,7 @@ class SwingRacketEnv(gym.Env):
 
     def step(self, action):
         self.racket.apply_target_action(
-                [action[0]*100, action[1]*100, action[2]*100+4*9.81],
+                [action[0]*200, action[1]*200, action[2]*200+4*9.81],
                 [action[3], action[4], action[5]]
             )
 
@@ -101,7 +101,8 @@ class SwingRacketEnv(gym.Env):
             self.done = True
             print("Timeout, exceed 1000 steps")
 
-        obs = self.racket.get_observation()[:2] + self.goal
+        obs = self.racket.get_observation()[:2] + \
+            self.ball.get_observation()[:2] +  self.goal
         return obs, reward, self.done, dict()
 
     def seed(self, seed=None):
@@ -120,13 +121,13 @@ class SwingRacketEnv(gym.Env):
         # TODO: Randomly set the location of the racket and ball
         _rand_x = random.uniform(7.5, 12.5)
         _rand_y = random.uniform(-5, 5)
-        _rand_z = random.uniform(0.2, 0.21)
+        _rand_z = 0.4
         self.racket = Racket(self.client,
                              #  [9.5, 0, 0.2],
                              [_rand_x, _rand_y, _rand_z],
-                             enable_orientation=False)
+                             rpy=[0, 0.5, 0])
         self.ball = Ball(self.client,
-                         pos=[_rand_x-0.08, _rand_y, _rand_z+0.5])
+                         pos=[_rand_x-0.1, _rand_y, _rand_z+0.7])
 
         # Set the goal to a random target
         self.goal = (np.random.uniform(-3, -12), np.random.uniform(-5, 5))
@@ -138,7 +139,8 @@ class SwingRacketEnv(gym.Env):
         self.done = False
         self.step_count = 0
 
-        obs = self.racket.get_observation()[:2] + self.goal
+        obs = self.racket.get_observation()[:2] + \
+            self.ball.get_observation()[:2] +  self.goal
         return obs
 
     def close(self):

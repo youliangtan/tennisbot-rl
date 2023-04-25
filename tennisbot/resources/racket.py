@@ -20,6 +20,7 @@ class Racket:
                  client,
                  pos=[0, 0, 0], 
                  enable_orientation=True,
+                 rpy = [0, 0, 0],
                  time_step=1/240,
                  scale = 1.0):
         """
@@ -29,10 +30,19 @@ class Racket:
         self.enable_orientation = enable_orientation
         self.client = client
         f_name = os.path.join(os.path.dirname(__file__), 'racket.urdf')
+        
+        # rpy to quaternion
+        quat = p.getQuaternionFromEuler(rpy)
         self.id = p.loadURDF(fileName=f_name,
                               basePosition=pos,
+                              baseOrientation=quat,
                               physicsClientId=client,
                               globalScaling=scale)
+
+        # Make bouncey racket
+        p.changeDynamics(self.id, -1, restitution=0.9)
+        p.changeDynamics(self.id, -1, lateralFriction=0.2)
+        p.changeDynamics(self.id, -1, rollingFriction=0.001)
 
         # Define PID controller gains
         # NOTE: this is tested in playground.py

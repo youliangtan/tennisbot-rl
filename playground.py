@@ -19,7 +19,7 @@ BALL_FORCE = 5.5
 DELAY_TIME = 1/240
 
 # Config for swing
-SWING_FRAME_COUNT = 100
+SWING_FRAME_COUNT = 20
 
 
 ##############################################################################
@@ -37,11 +37,11 @@ def main(args):
     ##################################################################################
     if args.swing:
         # Load model in world
-        position = [3, 0.1, 1]
-        ball = Ball(pybullet_client, pos=[position[0]-0.08, position[1], position[2]+0.5])
-        racket = Racket(pybullet_client, pos=position, time_step=DELAY_TIME)
+        position = [3, 0.1, 0.5]
+        ball = Ball(pybullet_client, pos=[position[0]-0.1, position[1], position[2]+0.7])
+        racket = Racket(pybullet_client, pos=position, rpy=[0, 0.5, 0])
 
-        Goal(pybullet_client, base=[-12, 0])
+        goal = Goal(pybullet_client, base=[-12, 0])
 
         # this is just for debugging
         time.sleep(3)
@@ -49,7 +49,7 @@ def main(args):
         for i in range (3000):
             if i < SWING_FRAME_COUNT:
                 # define the action space as [x, y, z, roll, pitch, yaw]
-                action_space = [-500, 50, 40, 0, 0.3, -0.2]
+                action_space = [-400, 50, 400, 0, 0.3, -0.2]
                 racket.apply_target_action(
                         [action_space[0], action_space[1], action_space[2]+4*9.81],
                         [action_space[3], action_space[4], action_space[5]]
