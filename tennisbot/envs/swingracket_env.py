@@ -51,6 +51,7 @@ class SwingRacketEnv(gym.Env):
         self.racket = None
         self.ball = None
         self.done = False
+        self.spawn_pos = [0, 0, 0.5] # Random
         self.previous_ball_goal_dist = None
         self.court_ball_contact_count = 0
         self.prev_action = None
@@ -76,17 +77,31 @@ class SwingRacketEnv(gym.Env):
         dist_ball_to_goal = np.linalg.norm(
             np.array(self.ball.get_observation()[:2]) - np.array(self.goal))
 
-        if self.previous_ball_goal_dist is None:
-            self.previous_ball_goal_dist = dist_ball_to_goal
-        else:
-            reward += max(self.previous_ball_goal_dist - dist_ball_to_goal, 0)*10
-            self.previous_ball_goal_dist = dist_ball_to_goal
+        ## This is to get the reward based on the diff in travel to goal between steps
+        # if self.previous_ball_goal_dist is None:
+        #     self.previous_ball_goal_dist = dist_ball_to_goal
+        # else:
+        #     reward += max(self.previous_ball_goal_dist - dist_ball_to_goal, 0)*10
+        #     self.previous_ball_goal_dist = dist_ball_to_goal
+
+        # check if ball is in contact with the racket at first few steps
+        if self.step_count < 50:
+            contact_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
+            if len(contact_ball_racket) > 0:
+                reward += 1
+                print("Contact ball racket at step: ", self.step_count)
+
+        # calc reward based on ball's distance to goal and traveled distance
+        dist_ball_to_origin = np.linalg.norm(
+            np.array(self.ball.get_observation()[:2]) - np.array(self.spawn_pos[:2]))
+        last_reward = dist_ball_to_origin - dist_ball_to_goal
 
         # check if ball is in contact with court
         contact_ball_court = p.getContactPoints(self.court.id, self.ball.id)
         if len(contact_ball_court) > 0:
             # reward -= dist_ball_to_goal
             self.done = True
+            reward += last_reward
             print("Contact ball ground at step [", self.step_count,
                 "] with distance: ", dist_ball_to_goal)
 
@@ -99,6 +114,7 @@ class SwingRacketEnv(gym.Env):
         
         if self.step_count > 1000:
             self.done = True
+            reward += last_reward
             print("Timeout, exceed 1000 steps")
 
         obs = self.racket.get_observation()[:2] + \
@@ -126,6 +142,7 @@ class SwingRacketEnv(gym.Env):
                              #  [9.5, 0, 0.2],
                              [_rand_x, _rand_y, _rand_z],
                              rpy=[0, 0.5, 0])
+        self.spawn_pos = [_rand_x, _rand_y, _rand_z]
         self.ball = Ball(self.client,
                          pos=[_rand_x-0.1, _rand_y, _rand_z+0.7])
 
