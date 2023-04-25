@@ -31,7 +31,7 @@ def main(argv):
     parser.add_argument('--sigma', type=float,  default = 0.1, metavar='', help='ES sigma: modulates the amount of noise used to populate each new generation') 
     parser.add_argument('--generations', type=int, default= 300, metavar='', help='Number of generations that the ES will run.')
     parser.add_argument('--folder', type=str, default='weights', metavar='', help='folder to store the evolved weights ')
-    parser.add_argument('--threads', type=int, metavar='', default = 2, help='Number of threads used to run evolution in parallel.')
+    parser.add_argument('--threads', type=int, metavar='', default = -1, help='Number of threads used to run evolution in parallel.')
 
     
     args = parser.parse_args()
@@ -78,6 +78,7 @@ def main(argv):
 
     p = GatedCNN(input_dim, action_dim)
     print("our action diom," ,action_dim)
+    print("our input dim", input_dim)
 
 
     # Initialise the EvolutionStrategy class
