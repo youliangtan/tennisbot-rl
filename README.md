@@ -1,6 +1,6 @@
 # tennisbot-rl
 
-The original tennisbot model is obtained from https://github.com/CORE-Robotics-Lab/Wheelchair-Tennis-Robot
+This is a simple floating racket environment to try use RL to hit incoming ball and learn to swing the racket.
 
 ![](pybullet_env.png)
 
@@ -41,9 +41,9 @@ python3 train_swing.py
 tensorboard --logdir=/tmp/ppo_swing/
 ```
 
-Validate Model
+Validate Model with pretrained model
 ```bash
-python3 validate_swing.py
+python3 validate_swing.py  -m backup_models/ppo_swing.zip
 ```
 
 ## train hit incoming tennis ball environment
@@ -62,3 +62,4 @@ python3 validate.py
 
 ## Notes
  - Revert back to `gym` instead of `gymnasium` since `stable-baselines` does not support `gymnasium` yet: https://github.com/DLR-RM/stable-baselines3/pull/780
+ - This work is inspired by the by the tennisbot project, from https://github.com/CORE-Robotics-Lab/Wheelchair-Tennis-Robot
