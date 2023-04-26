@@ -20,7 +20,9 @@ class Racket:
                  client,
                  pos=[0, 0, 0], 
                  enable_orientation=True,
-                 time_step=1/240):
+                 rpy = [0, 0, 0],
+                 time_step=1/240,
+                 scale = 1.0):
         """
         init the racket object with default position, orientation, 
         and time step for PID
@@ -28,9 +30,19 @@ class Racket:
         self.enable_orientation = enable_orientation
         self.client = client
         f_name = os.path.join(os.path.dirname(__file__), 'racket.urdf')
+        
+        # rpy to quaternion
+        quat = p.getQuaternionFromEuler(rpy)
         self.id = p.loadURDF(fileName=f_name,
                               basePosition=pos,
-                              physicsClientId=client)
+                              baseOrientation=quat,
+                              physicsClientId=client,
+                              globalScaling=scale)
+
+        # Make bouncey racket
+        p.changeDynamics(self.id, -1, restitution=0.9)
+        p.changeDynamics(self.id, -1, lateralFriction=0.2)
+        p.changeDynamics(self.id, -1, rollingFriction=0.001)
 
         # Define PID controller gains
         # NOTE: this is tested in playground.py
@@ -77,24 +89,22 @@ class Racket:
                 self.ori_controller[i].setpoint = 0
                 
     
-    def apply_target_action(self, action):
+    def apply_target_action(self, forces, torques=None):
         """
-        Apply directly target force and torque.
+        Apply directly target force
         """
         pose = self.get_observation()
         p.applyExternalForce(
-                self.id, -1, action[:3], pose[:3], p.WORLD_FRAME)
-            
-        # p.applyExternalTorque(self.id, -1, action[3:6], p.WORLD_FRAME)
+                self.id, -1, forces[:3], pose[:3], p.WORLD_FRAME)
+        if torques is not None:
+            p.applyExternalTorque(self.id, -1, torques[:3], p.WORLD_FRAME)
 
 
     def apply_pid_force_torque(self):
         """
         Applying force and torque control to the racket
-        """
-        
+        """       
         # for i_step in range(2):
-            
         pose = self.get_observation()
 
         # Control the racket position, default z-force to compensate gravity
@@ -124,6 +134,13 @@ class Racket:
         # return pos + ori
         return pos
 
+    def get_vel(self) -> List[float]:
+        """
+        Get the velocity of the racket in the simulation
+        return velocity
+        """
+        vel, ang_vel = p.getBaseVelocity(self.id, self.client)
+        return vel
     
     def reset_pos(self, pos):
         """reset position for the racket

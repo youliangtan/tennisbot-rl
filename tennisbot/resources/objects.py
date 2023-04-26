@@ -57,6 +57,13 @@ class Ball:
         pos, _ = p.getBasePositionAndOrientation(self.id, self.client)
         return pos
 
+    def get_vel(self) -> List[float]:
+        """
+        Get the velocity of the ball in the simulation
+        """
+        vel, _ = p.getBaseVelocity(self.id, self.client)
+        return vel
+
     def apply_force(self, force: Tuple[float, float, float]):
         """
         Apply force to the ball in the simulation
@@ -87,3 +94,11 @@ class Ball:
 
         randomlist = [rand_x, rand_y, rand_z]
         self.reset_pos(randomlist)
+
+##############################################################################
+class Goal:
+    def __init__(self, client, base):
+        f_name = os.path.join(os.path.dirname(__file__), 'simplegoal.urdf')
+        self.id = p.loadURDF(fileName=f_name,
+                   basePosition=[base[0], base[1], 0],
+                   physicsClientId=client)
