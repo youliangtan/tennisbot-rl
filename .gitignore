@@ -3,6 +3,7 @@ tmp/*
 __pycache__/
 *.py[cod]
 *$py.class
+.vscode
 
 # C extensions
 *.so
@@ -128,7 +129,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-*.zip
+# *.zip
 ppo_log/
 saved_model/
 tmp/

@@ -8,7 +8,7 @@
       <spinning_friction value="0.001"/>     
     </contact> -->
     <inertial>
-      <mass value="1.0" />
+      <mass value="0.05" />
       <!-- center of mass (com) is defined w.r.t. link local coordinate system -->
       <!-- give a little y-offset to make the top precess -->
       <origin xyz="0 0 0" /> 
