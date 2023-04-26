@@ -23,7 +23,7 @@ def main(argv):
     # env = gym.make('Tennisbot-v0')
 
     
-    parser.add_argument('--environment', type=str, default='Tennisbot-v0', metavar='', help='Environment: any OpenAI Gym or pyBullet environment may be used')
+    parser.add_argument('--environment', type=str, default='SwingRacket-v0', metavar='', help='Environment: any OpenAI Gym or pyBullet environment may be used')
     parser.add_argument('--popsize', type=int,  default = 200, metavar='', help='Population size.') 
     parser.add_argument('--print_every', type=int, default = 1, metavar='', help='Print and save every N steps.') 
     parser.add_argument('--lr', type=float,  default = 0.2, metavar='', help='ES learning rate.') 
@@ -83,16 +83,7 @@ def main(argv):
 
     # Initialise the EvolutionStrategy class
     print('\nInitilisating static-network ES for ' + str(args.environment))
-    es = EvolutionStrategyStatic(
-            p.get_weights(),
-            args.environment,
-            input_size=input_dim,
-            population_size=args.popsize,
-            sigma=args.sigma,
-            learning_rate=args.lr,
-            decay=args.decay,
-            num_threads=args.threads
-        )
+    es = EvolutionStrategyStatic(p.get_weights(), args.environment, population_size=args.popsize, sigma=args.sigma, learning_rate=args.lr, decay=args.decay, num_threads=args.threads)
 
     # Start the evolution
     tic = time.time()
