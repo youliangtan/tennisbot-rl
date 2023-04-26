@@ -86,6 +86,20 @@ class TennisbotEnv(gym.Env):
         print("init done")
 
         self.reset()
+        
+    def dist_to_reward(self, dist):
+        if dist < 0.5:
+            return 20
+        elif dist < 1:
+            return 15
+        elif dist < 2:
+            return 10
+        elif dist < 3:
+            return 5
+        elif dist < 4:
+            return 1
+        else:
+            return 0
 
     def step(self, action):
         # Feed action to the racket and get observation of racket's state
@@ -157,7 +171,7 @@ class TennisbotEnv(gym.Env):
         if len(contacts_ball_racket) > 0:
             print("   BINGO!!!! Ball hits the racket!")
             reward += 25
-            reward -= delta_dist*5 # with a factor of 5
+            reward += self.dist_to_reward(delta_dist)
             # self.done = True
 
         # # this is to prevent the agent making big moves
@@ -177,7 +191,7 @@ class TennisbotEnv(gym.Env):
             print(f"Ball passed the racket step [{self.step_count}]"
                   f"with y-z distance: {delta_dist}")
             self.done = True
-            reward -= delta_dist*5 # with a factor of 5
+            reward += self.dist_to_reward(delta_dist)
 
         # make sure the racket stays in the court in the x direction
         if 3 > racket_pose[0] > 15:

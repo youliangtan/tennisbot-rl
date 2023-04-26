@@ -4,7 +4,6 @@ Source repo: https://github.com/enajx/ES
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
        
 class MLP(nn.Module):
     "MLP, no bias"
@@ -115,15 +114,13 @@ class GatedCNN(nn.Module):
         # A += self.b_0.repeat(1, 1, seq_len, 1)
         B = self.conv_gate_0(x) # (bs, Cout, seq_len, 1)
         # B += self.c_0.repeat(1, 1, seq_len, 1)
-        h = F.tanh(A) * F.sigmoid(B)  # (bs, Cout, seq_len, 1)
-
-
+        h = torch.tanh(A) * torch.sigmoid(B)  # (bs, Cout, seq_len, 1)
 
         A = self.conv_1(h)  # (bs, Cout, seq_len, 1)
         # A += self.b_0.repeat(1, 1, seq_len, 1)
         B = self.conv_gate_1(h)  # (bs, Cout, seq_len, 1)
         # B += self.c_0.repeat(1, 1, seq_len, 1)
-        h = F.tanh(A) * F.sigmoid(B)  # (bs, Cout, seq_len, 1)
+        h = torch.tanh(A) * torch.sigmoid(B)  # (bs, Cout, seq_len, 1)
 
         h = self.conv_2(h)
 

@@ -24,7 +24,7 @@ DELAY_MODE = False
 class SwingRacketEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, use_gui=True, delay_mode=DELAY_MODE):
+    def __init__(self, use_gui=False, delay_mode=DELAY_MODE):
         # Define action and observation space in 6DOF force and torque
         self.action_space = gym.spaces.box.Box(
             low=np.array([-2, -2.0, -2.0, -5, -5, -5], dtype=np.float32),

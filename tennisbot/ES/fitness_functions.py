@@ -30,11 +30,7 @@ def fitness_static(evolved_parameters: np.array, environment : str, normalizer, 
             env = gym.make(environment)
         if render:
             env.render()
-
-            # env.render()  # bullet envs
         
-
-
         # Check if selected env is pixel or state-vector 
         # if len(env.observation_space.shape) == 3:     # Pixel-based environment
         #     pixel_env = True
