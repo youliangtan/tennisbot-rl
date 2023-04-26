@@ -161,3 +161,5 @@ def fitness_static(evolved_parameters: np.array, environment : str, normalizer, 
 
     return rew_ep
     # return max(rew_ep, 0)
+
+    
