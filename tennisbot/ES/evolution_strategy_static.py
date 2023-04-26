@@ -265,15 +265,17 @@ class EvolutionStrategyStatic(object):
         normalizer_state = Normalizer(self.input_size)
         
         for iteration in range(iterations):                     # Algorithm 2. Salimans, 2017: https://arxiv.org/abs/1703.03864
-            population = self._get_population()  
-            print("HIHIHHIHI\n")# List of list of random nets [[w1, w2, .., w122888],[...],[...]] : Step 5
+            population = self._get_population()                 # List of list of random nets [[w1, w2, .., w122888],[...],[...]] : Step 5
             rewards = self._get_rewards(pool, population,normalizer_state)       # List of corresponding rewards for self.weights + jittered populations : Step 6
             self._update_weights(rewards, population)           # Updates self.weights : Steps 8->12 
-            print((iteration + 1) % print_step)
+            # print((iteration + 1) % print_step)
             if (iteration + 1) % print_step == 0:
                 rew_ = rewards.mean()
-                print('iter %4i | reward: %3i |  update_factor: %f  lr: %f | sum_w: %i sum_abs_w: %i' % ( iteration + 1, rew_ , self.update_factor, self.learning_rate, int(np.sum(self.weights)) ,int(np.sum(abs(self.weights))) ), flush=True)
-                
+                print("----------------------------------------------- \n" +
+                      f"iter {iteration + 1} | reward: {rew_} |  update_factor: {self.update_factor}" +
+                      f"lr: {self.learning_rate} | sum_w: {np.sum(self.weights)} sum_abs_w: {np.sum(abs(self.weights))}"
+                      , flush=True)
+
                 # if rew_ > 100:
                 torch.save(self.get_weights(), path + "/"+ id_ + "/" + self.environment + "__rew_" + str(int(rew_)) + "__pop_" + str(self.POPULATION_SIZE) + "__{}.dat".format(iteration))
 

@@ -60,6 +60,15 @@ Validate Model
 python3 validate.py
 ```
 
+## Try out evoluationary algorithm
+
+**This is still in testing mode, there is memory leak problem when running it on linux environment, will need further scrutiny**
+
+Example:
+```bash
+python3 train_static.py --generations 10 --popsize 10 --environment SwingRacket-v0
+```
+
 ## Notes
  - Revert back to `gym` instead of `gymnasium` since `stable-baselines` does not support `gymnasium` yet: https://github.com/DLR-RM/stable-baselines3/pull/780
  - This work is inspired by the by the tennisbot project, from https://github.com/CORE-Robotics-Lab/Wheelchair-Tennis-Robot
