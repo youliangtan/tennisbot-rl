@@ -49,9 +49,7 @@ def compute_ranks(positive_rewards, negative_rewards, nb_best_directions):
     Returns rank as a vector of len(x) with integers from 0 to len(x)
     """
     # assert x.ndim == 1
-    print("there are rewards", len(positive_rewards))
     scores = {k: (r_pos - r_neg) for k, (r_pos, r_neg) in enumerate(zip(positive_rewards, negative_rewards))}
-    print(scores,'sssssssssssssss')
     order = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)[:nb_best_directions]
 
 
@@ -219,7 +217,6 @@ class EvolutionStrategyStatic(object):
 
         # step = np.dot( np.array(rollouts[0] - rollouts[1]) , np.array(rollouts[-1]) )
 
-        print("confused again",order)
         elite_population =  [ positive_pertubation[k] for k in order]
 
 
@@ -231,8 +228,7 @@ class EvolutionStrategyStatic(object):
             
             self.update_factor = self.learning_rate / (std * self.K)
             # K * layer_para_size , K *1
-            print("size here", layer_population.shape, np.reshape(reward_diff,(-1,1)).shape, w.shape)
-            print("confused", w)
+  
 
             self.weights[index] = w + self.update_factor * np.matmul( (layer_population.T), np.reshape(reward_diff,(-1,1)))
 
