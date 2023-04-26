@@ -31,7 +31,7 @@ def main(args):
         ob, _, done, _ = env.step(action)
         # print("action", action)
         env.render(mode="human")
-        # time.sleep(1/240)
+        time.sleep(1/240)
         if done:
             ob = env.reset()
             time.sleep(1)

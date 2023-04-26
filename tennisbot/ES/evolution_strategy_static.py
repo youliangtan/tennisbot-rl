@@ -24,7 +24,7 @@ import itertools
 repeat_j =10
 class Normalizer():
 
-    def __init__(self, nb_inputs=6):
+    def __init__(self, nb_inputs):
         self.n = np.zeros(shape=(1,nb_inputs))
         self.mean = np.zeros(shape=(1,nb_inputs))
         self.mean_diff = np.zeros(shape=(1,nb_inputs))
@@ -83,7 +83,16 @@ def worker_process(arg):
 
 
 class EvolutionStrategyStatic(object):
-    def __init__(self, weights, environment, population_size=20, sigma=0.1, learning_rate=0.2, decay=0.995, num_threads=-1, K=66):
+    def __init__(self,
+                 weights,
+                 environment,
+                 input_size,
+                 population_size=20,
+                 sigma=0.1,
+                 learning_rate=0.2,
+                 decay=0.995,
+                 num_threads=-1,
+                 K=66):
         
         self.weights = weights
         self.environment = environment
@@ -94,7 +103,8 @@ class EvolutionStrategyStatic(object):
         self.num_threads = mp.cpu_count() if num_threads == -1 else num_threads
         self.update_factor = self.learning_rate / (self.POPULATION_SIZE * self.SIGMA)
         self.K = K
-        
+        self.input_size = input_size
+
         self.get_reward = fitness_static
         
     def _get_weights_try(self, w, p):
@@ -251,14 +261,7 @@ class EvolutionStrategyStatic(object):
         
         generations_rewards = []
 
-
-
-
-
-
-        normalizer_state = Normalizer()
-
-
+        normalizer_state = Normalizer(self.input_size)
         
         for iteration in range(iterations):                     # Algorithm 2. Salimans, 2017: https://arxiv.org/abs/1703.03864
             

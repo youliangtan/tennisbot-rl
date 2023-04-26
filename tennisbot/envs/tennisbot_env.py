@@ -124,6 +124,10 @@ class TennisbotEnv(gym.Env):
         if self.step_count < BALL_SHOOT_FRAMES:
             return ob, reward, False, dict()
 
+        # this is the distance of the ball from the racket in the yz plane
+        delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
+                            (ball_pose[1] - racket_pose[1]) ** 2))
+
         # # end the episode if the ball hits the court
         # contacts_ball_ground = p.getContactPoints(self.court.id, self.ball.id)
         # if len(contacts_ball_ground) > 0:
@@ -152,7 +156,8 @@ class TennisbotEnv(gym.Env):
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
             print("   BINGO!!!! Ball hits the racket!")
-            reward += 20
+            reward += 25
+            reward -= delta_dist*5 # with a factor of 5
             # self.done = True
 
         # # this is to prevent the agent making big moves
@@ -165,19 +170,22 @@ class TennisbotEnv(gym.Env):
             dist = (racket_pose[1] - ball_pose[1])
             # print(self.prev_ball_racket_yz_dist - dist)
             # reward += max(self.prev_ball_racket_yz_dist - dist, 0)
-            reward += self.prev_ball_racket_yz_dist - dist
+            # reward += self.prev_ball_racket_yz_dist - dist
             self.prev_ball_racket_yz_dist = dist
             pass
         else:
-            delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-                                (ball_pose[1] - racket_pose[1]) ** 2))
             print(f"Ball passed the racket step [{self.step_count}]"
                   f"with y-z distance: {delta_dist}")
             self.done = True
+            reward -= delta_dist*5 # with a factor of 5
+
+        # make sure the racket stays in the court in the x direction
+        if 3 > racket_pose[0] > 15:
+            reward -= 1
 
         # # end the episode after 1000 steps
         if self.step_count > 1000:
-            print("Episode ends after 1000 steps!, racket pose: ", racket_pose)
+            print(f"Episode ends after 1000 steps!, delta pose: {delta_dist}")
             self.done = True
 
         # print("reward", reward)

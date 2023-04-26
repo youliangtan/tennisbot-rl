@@ -83,7 +83,16 @@ def main(argv):
 
     # Initialise the EvolutionStrategy class
     print('\nInitilisating static-network ES for ' + str(args.environment))
-    es = EvolutionStrategyStatic(p.get_weights(), args.environment, population_size=args.popsize, sigma=args.sigma, learning_rate=args.lr, decay=args.decay, num_threads=args.threads)
+    es = EvolutionStrategyStatic(
+            p.get_weights(),
+            args.environment,
+            input_size=input_dim,
+            population_size=args.popsize,
+            sigma=args.sigma,
+            learning_rate=args.lr,
+            decay=args.decay,
+            num_threads=args.threads
+        )
 
     # Start the evolution
     tic = time.time()
