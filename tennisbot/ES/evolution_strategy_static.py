@@ -43,11 +43,6 @@ class Normalizer():
         obs_std = np.sqrt(self.var)
         return (inputs - obs_mean) / obs_std
 
-
-
-
-
-
 def compute_ranks(positive_rewards, negative_rewards, nb_best_directions):
     """
     Returns rank as a vector of len(x) with integers from 0 to len(x)

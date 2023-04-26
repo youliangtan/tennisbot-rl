@@ -11,7 +11,7 @@ import argparse
 ##############################################################################
 
 def main(args):
-    env = gym.make('Tennisbot-v0')
+    env = gym.make('Tennisbot-v0',  use_gui=True)
 
     if args.model_file:
         if args.select == 'ppo':

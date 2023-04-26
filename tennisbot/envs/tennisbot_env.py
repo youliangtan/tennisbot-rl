@@ -32,7 +32,7 @@ class TennisbotEnv(gym.Env):
     """
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, use_gui=True, is_sparse_reward=False):
+    def __init__(self, use_gui=False, is_sparse_reward=False):
         # Define action and observation space
         self.action_space = gym.spaces.box.Box(
             ## NOTE: This is the simplified action space in 3DOF x, y, z axis

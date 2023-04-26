@@ -4,7 +4,7 @@ Source repo: https://github.com/enajx/ES
 
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
        
 class MLP(nn.Module):
     "MLP, no bias"
@@ -56,14 +56,6 @@ class CNN(nn.Module):
 
     def get_weights(self):
         return  nn.utils.parameters_to_vector(self.parameters() ).detach().numpy()
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-
-DOF = 6
-
 
 class GatedCNN(nn.Module):
     '''

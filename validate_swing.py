@@ -11,7 +11,7 @@ import argparse
 ##############################################################################
 
 def main(args):
-    env = gym.make('SwingRacket-v0', delay_mode=True)
+    env = gym.make('SwingRacket-v0', use_gui=True, delay_mode=True)
 
     if args.model_file:
         if args.select == 'ppo':
