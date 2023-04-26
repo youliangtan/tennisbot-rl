@@ -11,7 +11,7 @@ import argparse
 ##############################################################################
 
 def main(args):
-    env = gym.make('SwingRacket-v0')
+    env = gym.make('SwingRacket-v0', delay_mode=True)
 
     if args.model_file:
         if args.select == 'ppo':
@@ -24,7 +24,7 @@ def main(args):
         model = SAC.load("model/ppo_swing/best_model.zip")
 
     print("------------- start running -------------")
-    
+
     ob = env.reset()
     while True:
         action,_states = model.predict(ob)
@@ -45,6 +45,6 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--model_file',
                         type=str, default='',
                         help="model file name")
-             
+
     args = parser.parse_args()
     main(args)

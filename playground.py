@@ -38,7 +38,7 @@ def main(args):
     if args.swing:
         # Load model in world
         position = [3, 0.1, 0.5]
-        ball = Ball(pybullet_client, pos=[position[0]-0.1, position[1], position[2]+0.7])
+        ball = Ball(pybullet_client, pos=[position[0]-0.1, position[1], position[2]+0.8])
         racket = Racket(pybullet_client, pos=position, rpy=[0, 0.5, 0])
 
         goal = Goal(pybullet_client, base=[-12, 0])

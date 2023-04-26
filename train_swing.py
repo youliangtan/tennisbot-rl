@@ -11,9 +11,12 @@ import argparse
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from sb3_contrib import TQC, TRPO
 
-tmp_path_ppo = "./tmp/swing_ppo/"
-tmp_path_sac = "./tmp/swing_sac/"
+tmp_path_ppo = "./tmp/ppo_swing/"
+tmp_path_sac = "./tmp/sac_swing/"
+tmp_path_tqc = "./tmp/tqc_swing/"
+tmp_path_trpo = "./tmp/trpo_swing/"
 
 ##############################################################################
 
@@ -51,6 +54,10 @@ def main(args):
         model_save_path = "./model/ppo_swing/"
     elif ('sac' in args.select):
         model_save_path = "./model/sac_swing/"
+    elif ('tqc' in args.select):
+        model_save_path = "./model/tqc_swing/"
+    elif ('trpo' in args.select):
+        model_save_path = "./model/trpo_swing/"
     else:
         print("Please select a valid agent: ppo or sac")
         return
@@ -81,9 +88,18 @@ def main(args):
                 )
 
     elif (args.select == 'sac'):
-        model = SAC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_sac)
+        model = SAC("MlpPolicy", env,
+                    batch_size=batch_size,
+                    verbose=0, tensorboard_log=tmp_path_sac)
+
+    elif (args.select == 'tqc'):
+        model = TQC("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_tqc)
+    
+    elif (args.select == 'trpo'):
+        model = TRPO("MlpPolicy", env, verbose=0, tensorboard_log=tmp_path_trpo)
+
     else:
-        print("Please select a valid agent: ppo or sac")
+        print("Please select a valid agent: ppo, tqc, trpo or sac")
         return
 
     print(model.policy)

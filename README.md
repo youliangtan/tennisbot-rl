@@ -11,6 +11,7 @@ install dependencies
  - gym
  - stable-baselines3
  - simple_pid
+ - sb3_contrib
 
 Install the py pkg
 ```bash
@@ -26,8 +27,26 @@ cd ..
 
 Run pybullet playground
 ```bash
-python3 playground.py
+python3 playground.py --swing
 ```
+
+## Train swing racket environment
+
+Run gym training
+```bash
+## Add --gui to show visualization
+python3 train_swing.py
+
+# to check tensorboard
+tensorboard --logdir=/tmp/ppo_swing/
+```
+
+Validate Model
+```bash
+python3 validate_swing.py
+```
+
+## train hit incoming tennis ball environment
 
 Run gym training
 ```bash
@@ -36,15 +55,9 @@ python3 train.py
 python3 train.py -s tuned_ppo
 ```
 
-Run validate
+Validate Model
 ```bash
 python3 validate.py
-```
-
-## Run swing racket demo
-
-```bash
-python3 train_swing.py
 ```
 
 ## Notes
