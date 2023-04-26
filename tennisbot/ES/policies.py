@@ -1,8 +1,11 @@
+"""
+Source repo: https://github.com/enajx/ES
+"""
+
 import torch
 import torch.nn as nn
 
-
-        
+       
 class MLP(nn.Module):
     "MLP, no bias"
     def __init__(self, input_space_dim, action_space_dim, bias=False):

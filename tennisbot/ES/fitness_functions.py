@@ -1,3 +1,7 @@
+"""
+Source repo: https://github.com/enajx/ES
+"""
+
 import gym
 from gym import wrappers as w
 from gym.spaces import Discrete, Box
@@ -21,7 +25,7 @@ def fitness_static(evolved_parameters: np.array, environment : str, normalizer, 
                     
         # Load environment
         try:
-            env = gym.make(environment, verbose = 0)
+            env = gym.make(environment)
         except:
             env = gym.make(environment)
         if render:
