@@ -11,7 +11,7 @@ import argparse
 ##############################################################################
 
 def main(args):
-    env = gym.make('Tennisbot-v0')
+    env = gym.make('Tennisbot-v0',  use_gui=True)
 
     if args.model_file:
         if args.select == 'ppo':
@@ -31,7 +31,7 @@ def main(args):
         ob, _, done, _ = env.step(action)
         # print("action", action)
         env.render(mode="human")
-        # time.sleep(1/240)
+        time.sleep(1/240)
         if done:
             ob = env.reset()
             time.sleep(1)

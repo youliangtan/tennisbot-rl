@@ -13,13 +13,13 @@ from tennisbot.resources.racket import Racket
 ##############################################################################
 
 # Configurations
-BALL_START_SHOOT_FRAME = 300
-BALL_SHOOT_FRAMES = 450
+BALL_START_SHOOT_FRAME = 10
+BALL_SHOOT_FRAMES = 40
 BALL_FORCE = 5.5
-DELAY_TIME = 1/240
 
 # Config for swing
 SWING_FRAME_COUNT = 20
+DELAY_TIME = 1/240
 
 
 ##############################################################################
@@ -83,21 +83,25 @@ def main(args):
         # Run Simulation
         for i_sim in range(3):
             # random pos of the ball
-            ball.random_pos([-12,-3],[-4,4],[0,3])
-
+            ball.random_pos([-12,-3],[-4,4],[0,3])      
+            
             # random pos of the racket
-            racket.random_pos([5,12],[-3,3],[1, 1.1])
-
-            # set target pos
+            racket.random_pos([5,12],[-3,3],[0,2])
+            
+            # set target pos related to the ball born pos
+            ball_pos = ball.get_pos()
+            
+            targetPos = [min(13, ball_pos[0]+20), ball_pos[1], 0.5]
+            print("--- targetPos ---")
+            print(targetPos)
             racket.set_target_location(targetPos + targetOri)
-            print("target location: ", racket.get_observation())
-
+            
             print(" ============ ith simulation ============ ")
             for i in range (3000):
                 
                 # shoot ball
                 if BALL_START_SHOOT_FRAME < i < BALL_SHOOT_FRAMES+BALL_START_SHOOT_FRAME:
-                    ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2])
+                    ball.apply_force([BALL_FORCE, 0, BALL_FORCE*2.2])
                 
                 racket.apply_pid_force_torque()
 
@@ -109,10 +113,6 @@ def main(args):
                 # contacts = p.getContactPoints(court.id, ball.id)
                 # if len(contacts) > 0:
                     # print("Court and ball are in collision!!")
-
-                p.stepSimulation()
-                time.sleep(DELAY_TIME)
-
     p.disconnect()
 
 ##############################################################################

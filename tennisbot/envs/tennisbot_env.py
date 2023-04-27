@@ -18,10 +18,9 @@ from tennisbot.resources.objects import Court, Ball
 # Configurations
 
 DELAY_MODE = False
-BALL_SHOOT_FRAMES = 100
+BALL_SHOOT_FRAMES = 5
 BALL_FORCE = 25
 ENABLE_ORIENTATION = False
-PAST_BALL_POSE_COUNT = 2
 
 ##############################################################################
 
@@ -33,24 +32,26 @@ class TennisbotEnv(gym.Env):
     """
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, use_gui=True, is_sparse_reward=False):
+    def __init__(self, use_gui=False, is_sparse_reward=False):
         # Define action and observation space
         self.action_space = gym.spaces.box.Box(
             ## NOTE: This is the simplified action space in 3DOF x, y, z axis
             # low=np.array([-4.0, -4.0, -2.0], dtype=np.float32),
             # high=np.array([4.0, 4.0, 2.0], dtype=np.float32))
-            low=np.array([-10.0, -10.0], dtype=np.float32),
-            high=np.array([10.0, 10.0], dtype=np.float32))
+            
+            # action is normalized
+            low=np.array([-1.0, -1.0], dtype=np.float32),
+            high=np.array([1.0, 1.0], dtype=np.float32))
 
             ## NOTE: This is the original action space in 6DOF
             # low=np.array([5.0, -5.0, 0.0, -PI, -PI, -PI], dtype=np.float32),
             # high=np.array([20.0, 5.0, 5.0, PI, PI, PI], dtype=np.float32))
         
-        # the observation space is the racket's state + ball's state (trajectory)
+        # the observation space is the racket pos and vel + ball pos and vel
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-20, -20, -5, -5, -5, -5] + [-20, -20, 0]*PAST_BALL_POSE_COUNT,
+            low=np.array([-20, -20, -5, -5, -5, -5] + [-20, -20, 0, -10, -10, -10],
                          dtype=np.float32),
-            high=np.array([20, 20, 5, 5, 5, 5]  + [20, 20, 10]*PAST_BALL_POSE_COUNT,
+            high=np.array([20, 20, 5, 5, 5, 5]  + [20, 20, 10, 10, 10, 10],
                           dtype=np.float32)
             # low=np.array([-20, -20, -5, -PI, -PI, -PI, -4, -4, -4],
             #              dtype=np.float32),
@@ -81,11 +82,24 @@ class TennisbotEnv(gym.Env):
         self.court_ball_contact_count = 0
         self.prev_action = None
         self.step_count = 0
-        self.ball_past_traj = []
         self.racket_scale = 1.0
         print("init done")
 
         self.reset()
+        
+    def dist_to_reward(self, dist):
+        if dist < 0.5:
+            return 20
+        elif dist < 1:
+            return 15
+        elif dist < 2:
+            return 10
+        elif dist < 3:
+            return 5
+        elif dist < 4:
+            return 1
+        else:
+            return 0
 
     def step(self, action):
         # Feed action to the racket and get observation of racket's state
@@ -96,14 +110,13 @@ class TennisbotEnv(gym.Env):
        
         # action[2] += 4 # add a constant z-axis force to make it float
         action = np.append(action, 4*9.81)
+        action[0] *= 10  # action is normalized
+        action[1] *= 10  # action is normalized
         self.racket.apply_target_action(action)
 
-        # Randomly shoot the ball out
+        # shoot the ball out
         if self.step_count < BALL_SHOOT_FRAMES:
-            self.ball.apply_force([
-                random.uniform(BALL_FORCE*0.9, BALL_FORCE*1.5),
-                random.uniform(-BALL_FORCE, BALL_FORCE),
-                BALL_FORCE])
+            self.ball.apply_force(self.ball_shoot_force)
 
         p.stepSimulation()
         self.step_count += 1
@@ -112,21 +125,22 @@ class TennisbotEnv(gym.Env):
             # time.sleep(1./24000.)
             time.sleep(1/240.)
 
-
         ball_pose = self.ball.get_observation()
         racket_pose = self.racket.get_observation()
         
         reward = 0
 
         # Get observation of the racket and ball state
-        racket_vel = self.racket.get_vel()
-        # # add current ball pose to the past ball trajectory
-        self.ball_past_traj = self.ball_past_traj[3:] + ball_pose
-        assert len(self.ball_past_traj) == PAST_BALL_POSE_COUNT*3
-        ob = np.array(racket_pose[:3] + racket_vel + self.ball_past_traj, dtype=np.float32)
+        ob = np.array(
+            racket_pose[:3] + self.racket.get_vel() + ball_pose + self.ball.get_vel(),
+            dtype=np.float32)
 
         if self.step_count < BALL_SHOOT_FRAMES:
             return ob, reward, False, dict()
+
+        # this is the distance of the ball from the racket in the yz plane
+        delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
+                            (ball_pose[1] - racket_pose[1]) ** 2))
 
         # # end the episode if the ball hits the court
         # contacts_ball_ground = p.getContactPoints(self.court.id, self.ball.id)
@@ -156,7 +170,8 @@ class TennisbotEnv(gym.Env):
         contacts_ball_racket = p.getContactPoints(self.racket.id, self.ball.id)
         if len(contacts_ball_racket) > 0:
             print("   BINGO!!!! Ball hits the racket!")
-            reward += 2
+            reward += 25
+            reward += self.dist_to_reward(delta_dist)
             # self.done = True
 
         # # this is to prevent the agent making big moves
@@ -165,23 +180,26 @@ class TennisbotEnv(gym.Env):
 
         # reward the racket to follow the ball
         x_ball_to_racket = ball_pose[0] - racket_pose[0]
-        if (x_ball_to_racket < 1.0):
-            dist = (racket_pose[1] - ball_pose[1])**2 + \
-                (racket_pose[2] - ball_pose[2])**2
+        if (x_ball_to_racket < 0.5):
+            dist = (racket_pose[1] - ball_pose[1])
             # print(self.prev_ball_racket_yz_dist - dist)
-            reward += max(self.prev_ball_racket_yz_dist - dist, 0)
+            # reward += max(self.prev_ball_racket_yz_dist - dist, 0)
+            # reward += self.prev_ball_racket_yz_dist - dist
             self.prev_ball_racket_yz_dist = dist
             pass
         else:
-            delta_dist = math.sqrt(((ball_pose[2] - racket_pose[2]) ** 2 +
-                                (ball_pose[1] - racket_pose[1]) ** 2))
             print(f"Ball passed the racket step [{self.step_count}]"
                   f"with y-z distance: {delta_dist}")
             self.done = True
+            reward += self.dist_to_reward(delta_dist)
 
-        # # end the episode after 1100 steps
-        if self.step_count > 1100:
-            print("Episode ends after 1100 steps!, racket pose: ", racket_pose)
+        # make sure the racket stays in the court in the x direction
+        if 3 > racket_pose[0] > 15:
+            reward -= 1
+
+        # # end the episode after 1000 steps
+        if self.step_count > 1000:
+            print(f"Episode ends after 1000 steps!, delta pose: {delta_dist}")
             self.done = True
 
         # print("reward", reward)
@@ -215,10 +233,17 @@ class TennisbotEnv(gym.Env):
                              ENABLE_ORIENTATION,
                              scale=self.racket_scale)
 
+        # ball shooting force during init
+        self.ball_shoot_force = [
+            random.uniform(BALL_FORCE, BALL_FORCE*1.5),
+            random.uniform(-BALL_FORCE*0.4, BALL_FORCE*0.4),
+            BALL_FORCE*0.8
+        ]
+
         self.ball = Ball(self.client, pos=[-9,0,1])
         x, y, z = self.ball.get_observation()
         self.ball.random_pos(
-            range_x=[x-3, x+3], range_y=[y-2, y+2], range_z=[z, z+0.5])
+            range_x=[x-3, x+3], range_y=[y-1, y+1], range_z=[z, z+0.5])
 
         self.done = False
         self.step_count = 0
@@ -230,12 +255,9 @@ class TennisbotEnv(gym.Env):
 
         self.prev_ball_racket_yz_dist = 0
        
-        # for first init, we will assume all past ball locations are the same
-        self.ball_past_traj = ball_pose*PAST_BALL_POSE_COUNT
         racket_vel = self.racket.get_vel()
-        # racket pose + racket vel + ball past traj
         return np.array(
-            racket_pose[0:3] + racket_vel + self.ball_past_traj,
+            racket_pose[0:3] + racket_vel + ball_pose + self.ball.get_vel(),
             dtype=np.float32)
 
     def render(self, mode='human'):
