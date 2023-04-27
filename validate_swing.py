@@ -11,7 +11,11 @@ import argparse
 ##############################################################################
 
 def main(args):
-    env = gym.make('SwingRacket-v0', use_gui=True, delay_mode=True)
+    
+    if args.headless:
+        env = gym.make('SwingRacket-v0', use_gui=False, delay_mode=False)
+    else:
+        env = gym.make('SwingRacket-v0', use_gui=True, delay_mode=True)
 
     if args.model_file:
         if args.select == 'ppo':
@@ -31,13 +35,14 @@ def main(args):
         action,_states = model.predict(ob)
         ob, _, done, _ = env.step(action)
         # print("action", action)
-        time.sleep(1/240)
+
+        if not args.headless:
+            time.sleep(1/240)
 
         if done:
             print("-------------------- Done ", count, "-------------------")
-            count += 1
+            count += 1               
             ob = env.reset()
-            time.sleep(1)
 
 ##############################################################################
 
@@ -49,6 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--model_file',
                         type=str, default='',
                         help="model file name")
+    parser.add_argument('--headless', action='store_true')
 
     args = parser.parse_args()
     main(args)
