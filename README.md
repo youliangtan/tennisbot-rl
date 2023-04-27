@@ -69,6 +69,11 @@ Example:
 python3 train_static.py --generations 10 --popsize 10 --environment SwingRacket-v0
 ```
 
+Validate Model
+```bash
+python3 evaluate_static.py --environment SwingRacket-v0 --path_weights backup_models/es_swing.dat
+```
+
 ## Notes
  - Revert back to `gym` instead of `gymnasium` since `stable-baselines` does not support `gymnasium` yet: https://github.com/DLR-RM/stable-baselines3/pull/780
  - This work is inspired by the by the tennisbot project, from https://github.com/CORE-Robotics-Lab/Wheelchair-Tennis-Robot

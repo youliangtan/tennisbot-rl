@@ -187,3 +187,6 @@ class SwingRacketEnv(gym.Env):
 
     def close(self):
         p.disconnect(self.client)
+        
+    def render(self, mode='human'):
+        pass
