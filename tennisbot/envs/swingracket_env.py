@@ -24,11 +24,11 @@ DELAY_MODE = False
 class SwingRacketEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, use_gui=True, delay_mode=DELAY_MODE):
+    def __init__(self, use_gui=False, delay_mode=DELAY_MODE):
         # Define action and observation space in 6DOF force and torque
         self.action_space = gym.spaces.box.Box(
-            low=np.array([-2, -2.0, -2.0, -5, -5, -5], dtype=np.float32),
-            high=np.array([2, 2.0, 2.0, 5, 5, 5], dtype=np.float32))
+            low=np.array([-1, -1.0, -1.0, -1, -1, -1], dtype=np.float32),
+            high=np.array([1, 1.0, 1.0, 1, 1, 1], dtype=np.float32))
 
         # the observation space is the racket's state + target goal
         self.observation_space = gym.spaces.box.Box(
@@ -60,16 +60,22 @@ class SwingRacketEnv(gym.Env):
         print("init done")
         self.reset()
 
-    def moved_dist_to_goal(self):
+    def moved_dist_to_goal(self, norm_reward=True):
+        """
+        set norm_reward to False to get the raw distace as reward
+        """
         # calc reward based on ball's distance to goal and traveled distance
         dist_ball_to_goal = np.linalg.norm(
             np.array(self.ball.get_observation()[:2]) - np.array(self.goal))
-        return self.initial_dist_to_goal - dist_ball_to_goal
+        traveled_dist = self.initial_dist_to_goal - dist_ball_to_goal
+        if norm_reward:
+            return (traveled_dist / self.initial_dist_to_goal)*20
+        return traveled_dist
 
     def step(self, action):
         self.racket.apply_target_action(
-                [action[0]*200, action[1]*200, action[2]*200+4*9.81],
-                [action[3], action[4], action[5]]
+                [action[0]*400, action[1]*400, action[2]*400+4*9.81],
+                [action[3]*5, action[4]*5, action[5]*5]
             )
 
         # print(action)

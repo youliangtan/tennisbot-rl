@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import gym
+import torch
 import torch.nn as nn
 from agent import TRPOAgent
 import tennisbot
@@ -68,10 +69,12 @@ def main(args):
             model = PPO.load(model_save_path + "best_model.zip", env=env,
                             tensorboard_log=tmp_path_ppo,
                             batch_size=batch_size,
-                            learning_rate=1e-3,)
+                            learning_rate=0.0001,)
         elif (args.select == 'sac'):
-            # TODO: load sac model
-            pass
+            model = SAC.load(model_save_path + "best_model.zip", env=env,
+                             tensorboard_log=tmp_path_sac,
+                             batch_size=batch_size,
+                             learning_rate=0.0001)
 
     elif (args.select == 'ppo'):
         policy_kwargs = dict(
