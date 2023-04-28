@@ -2,7 +2,7 @@
 
 This is a simple floating racket environment to try use RL to hit incoming ball and learn to swing the racket.
 
-![](tennis-strokes.gif)
+![](assets/tennis-strokes.gif)
 
 ## Installation
 
@@ -41,16 +41,18 @@ python3 train_swing.py
 tensorboard --logdir=/tmp/ppo_swing/
 ```
 
-** Is better to train the model locally from scarth, since it was noticed that the policy works slightly different on computer's pybullet env.
+*Recommend to train the model locally from scratch, since it was noticed that the policy works slightly different on computer's pybullet env.*
 
 Validate Model with pretrained model
 ```bash
 python3 validate_swing.py  -m backup_models/ppo_swing.zip
 ```
 
+Use `--headless` to speed up validation.
+
 ## train hit incoming tennis ball task environment
 
-** Still in progress not make it learnable.
+*Still in progress to make the model learnable.*
 
 Run gym training
 ```bash
@@ -70,12 +72,12 @@ python3 validate.py
 
 Example:
 ```bash
-python3 train_static.py --generations 10 --popsize 10 --environment SwingRacket-v0
+python3 train_es.py --generations 10 --popsize 10 --environment SwingRacket-v0
 ```
 
 Validate Model
 ```bash
-python3 evaluate_static.py --environment SwingRacket-v0 --path_weights backup_models/es_swing.dat
+python3 evaluate_es.py --environment SwingRacket-v0 --path_weights backup_models/es_swing.dat
 ```
 
 ## Notes
