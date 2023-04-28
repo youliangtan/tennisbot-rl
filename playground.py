@@ -89,7 +89,7 @@ def main(args):
             racket.random_pos([5,12],[-3,3],[0,2])
             
             # set target pos related to the ball born pos
-            ball_pos = ball.get_pos()
+            ball_pos = ball.get_observation()
             
             targetPos = [min(13, ball_pos[0]+20), ball_pos[1], 0.5]
             print("--- targetPos ---")
