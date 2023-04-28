@@ -17,7 +17,7 @@ from tennisbot.resources.objects import Court, Ball
 ##############################################################################
 # Configurations
 
-DELAY_MODE = False
+DELAY_MODE = True
 BALL_SHOOT_FRAMES = 5
 BALL_FORCE = 25
 ENABLE_ORIENTATION = False
