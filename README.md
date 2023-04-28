@@ -41,16 +41,18 @@ python3 train_swing.py
 tensorboard --logdir=/tmp/ppo_swing/
 ```
 
-** Recommend to train the model locally from scarth, since it was noticed that the policy works slightly different on computer's pybullet env.
+*Recommend to train the model locally from scratch, since it was noticed that the policy works slightly different on computer's pybullet env.*
 
 Validate Model with pretrained model
 ```bash
 python3 validate_swing.py  -m backup_models/ppo_swing.zip
 ```
 
+Use `--headless` to speed up validation.
+
 ## train hit incoming tennis ball task environment
 
-** Still in progress to make the model learnable.
+*Still in progress to make the model learnable.*
 
 Run gym training
 ```bash
